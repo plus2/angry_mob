@@ -62,6 +62,10 @@ class AngryMob
 
     def call
       # XXX - uses default action, raises if there isn't one!
+      find_default || raise
+      before = state
+      default[]
+      changed if changed?(before)
     end
 
     def [](*actions)
