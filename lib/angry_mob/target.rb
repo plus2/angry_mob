@@ -7,9 +7,13 @@ class AngryMob
         # TODO = build NotImplemented raising stubs
       end
 
-      def default_action(name, &blk)
-        action name, &blk
-        @default_action = name
+      def default_action(name=nil, &blk)
+        if name && blk
+          action name, &blk
+          @default_action = name
+        else
+          @default_action
+        end
       end
 
       def actions
@@ -18,40 +22,11 @@ class AngryMob
 
       def action(name, &blk)
         raise(TargetError, "action already exists for #{self}") if actions.key?(name)
-        actions[name] = blk
+        actions[name] = true
+        define_method(name, &blk)
       end
+    end # class << self
 
-      def state(&blk)
-        @state = blk
-      end
-
-      def targets
-        @@targets ||= Dictionary.new
-      end
-
-      def instances
-        @@instances ||= {}
-      end
-
-      def new_target(nickname, *args, &block)
-        raise(TargetError, "no target nicknamed #{nickname} found") unless targets.key?(nickname)
-        klass = targets[nickname]
-
-        if klass.ancestors.include?(AngryMob::SingletonTarget)
-          instances[nickname] ||= klass.new(*args,&block)
-          # XXX - update_args ?
-        else
-          klass.new(*args,&block)
-        end
-      end
-
-      def nickname(name)
-        raise "target with nickname #{name} already defined" if targets.key?(name)
-        targets[name] = self
-
-        @nickname = name
-      end
-    end
 
     def initialize(*args)
       @args = if Hash === args.last then args.pop else {} end
@@ -60,33 +35,72 @@ class AngryMob
       end
     end
 
-    def call
-      # XXX - uses default action, raises if there isn't one!
-      find_default || raise
-      before = state
-      default[]
-      changed if changed?(before)
+    def call(node)
+      raise(TargetError, "No default action found") unless self.class.default_action
+
+      noticing_changes(node) { send( self.class.default_action ) }
     end
 
-    def [](*actions)
-      # XXX - returns lambda composing calls to each named action
+    def [](*run_actions)
+      run_actions.each do |action|
+        raise(TargetError, "No '#{action}' action not found") unless self.class.actions.key?(action)
+      end
+
+      lambda {|node|
+        noticing_changes(node) { run_actions.each {|action| send(action)} }
+      }
+    end
+
+    attr_reader :node
+
+    def noticing_changes(node, &blk)
+      before = state
+      @node = node
+
+      yield
+
+      if changed?(before)
+        changed 
+        notify
+      end
+    ensure
+      @node = nil
     end
 
     def notify
-      # XXX - is called when pre state != post state
+      node.notify( @args[:notify] ) if @args[:notify]
     end
 
-    # TODO - do stuff when updated or changed ?
     def changed
+      # no-op
     end
-    def updated 
+
+    def changed?(pre_state)
+      pre_state != state
+    end
+
+    def state
+      {}
     end
 
     def default_object
       @args[:default]
     end
+
+    def merge_defaults(attrs)
+      # TODO - merge
+      @args.replace( attrs.update(@args) )
+    end
+
+    # TODO if?
+    # TODO unless?
+
     def method_missing(method,*args,&blk)
-      # XXX - delegates to default object
+      if (dobj = default_object) && dobj.respond_to?(method)
+        dobj.send(method,*args,&blk)
+      else
+        super
+      end
     end
   end
 end
