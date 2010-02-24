@@ -13,7 +13,7 @@ end
 class Apache2Target < ServiceTarget
   nickname :apache2
 
-  state do
+  def state
     {
       :etc => '/etc/apache2'.pathname.exist?
     }
@@ -35,33 +35,33 @@ end
 class DirectoryTarget < AngryMob::Target
   nickname :dir
 
-  state do
+  def state
     {
       :exists => exist?
     }
   end
 
   default_action :create do
-    puts "create"
+    puts "create #{default_object} #{exist?}"
   end
 end
 
 mob.add_act('apache2') do |a,node|
 
-  a.apache2(:any => :config, :you => :like)[:enable]
+  a << a.apache2(:any => :config, :you => :like)[:enable]
 
   d = AngryMob::Defaults.new( :owner => 'root', :group => 'root', :notifies => { :later => [ a.apache2[:restart] ] } )
 
   #a << AngryMob::Target.new_target(:dir, node.apache.log_dir, d.merge(:mode => 0755) )
 
   a << AngryMob::Target.new_target(:dir, "/usr/local/bin/apache2_module_conf_generate.pl".pathname, d)
-  a.dir("/usr/local/bin/apache2_module_conf_generate.pl".pathname, d)
+  a << a.dir("/usr/local/bin/apache2_module_conf_generate.pl".pathname, d)
 
   #a << AngryMob::Target.new_target(:template, node.apache.dir + 'apache2.conf', :template => '')
 
   a.schedule_act('apache2/mod_rewrite')
 
-  a.apache2[:start]
+  a << a.apache2[:start]
 end
 
 

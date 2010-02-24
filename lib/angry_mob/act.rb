@@ -1,3 +1,4 @@
+# TODO - remove, its role has been usurped
 class AngryMob
   class Act
     def initialize(name)
@@ -26,13 +27,8 @@ class AngryMob
       @node = nil
     end
 
-    def schedule_act act_name
-      # XXX how will this work?
-    end
-
     def method_missing(method, *args, &block)
-      @node.targets << t = Target.new_target(method, *args, &block)
-      t
+      Target.new_target(method, *args, &block)
     end
   end
 end

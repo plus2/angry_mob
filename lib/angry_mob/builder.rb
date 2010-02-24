@@ -34,14 +34,17 @@ class AngryMob
     end
 
     def defaults_for(name)
-      # TODO - merge stack
       @contexts[name].last || {}
+      # TODO -> merge under some circumstances
     end
 
     def method_missing(method, *args, &blk)
       @contexts[method] << args.first
-      yield
-      @contexts[method].pop
+
+      if block_given?
+        yield
+        @contexts[method].pop
+      end
     end
   end
 

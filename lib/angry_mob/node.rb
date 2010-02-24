@@ -48,6 +48,10 @@ class AngryMob
       # TODO implement
     end
 
+    # TODO - call another act now
+    def sub_act
+    end
+
     def method_missing(method,*args,&block)
       attributes.send(method,*args)
     end
