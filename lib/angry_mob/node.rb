@@ -1,6 +1,8 @@
 
 class AngryMob
   class Node < Struct.new(:name,:attributes)
+    include Log
+
     def initialize(name, attributes)
       self.name = name
       self.attributes = Hashie::Mash.new(attributes)
@@ -27,16 +29,41 @@ class AngryMob
 
     def next_act
       start_iterating!
-      @iterating_act_names.pop
+      @iterating_act_names.shift
+    end
+
+    def run!
+      @running_targets = targets.reverse
+      
+      log "running #{@running_targets.size} targets"
+
+      while target = @running_targets.pop
+
+        log
+
+        begin
+          target.call(self)
+        rescue Object
+          log "error calling #{target} defined_at=#{target.defined_at.inspect if target.respond_to?(:defined_at)}"
+          raise $!
+        end
+      end
+
+      delayed_targets.each {|t| t.call(self)}
     end
 
     def notify(notification)
-      later = [ notification[:later] ].flatten.compact
-      now   = [ notification[:now  ] ].flatten.compact
+      if AngryMob::NotifyBuilder === notification
+        # TODO
+        log "notify builder"
+      else
+        later = [ notification[:later] ].flatten.compact
+        now   = [ notification[:now  ] ].flatten.compact
 
-      now.each {|n| n.call(node)}
+        now.each {|n| n.call(node)}
 
-      delayed_targets += later
+        delayed_targets += later
+      end
     end
 
     def merge_defaults(attrs)
@@ -44,12 +71,8 @@ class AngryMob
     end
 
     def schedule_act(*acts)
-      acts.tapp
-      # TODO implement
-    end
-
-    # TODO - call another act now
-    def sub_act
+      raise(CompilationError, "schedule_act called when not compiling") unless @iterating
+      @iterating_act_names += acts
     end
 
     def method_missing(method,*args,&block)
