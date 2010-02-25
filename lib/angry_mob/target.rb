@@ -1,44 +1,9 @@
 class AngryMob
   class TargetError < StandardError; end
-
-  class TargetCall # TODO  < Blankslate
-    attr_accessor :act
-    attr_reader :action_names
-
-    def initialize(target, action_names)
-      @target = target
-      @action_names = action_names
-    end
-
-    def call(node)
-      @target.call(node,self)
-    end
-
-    def defined_at
-      @defined_at ||= []
-    end
-    
-    def add_caller(c)
-      defined_at << c
-    end
-
-    def merge_defaults(defaults)
-      @target.merge_defaults(defaults)
-    end
-
-    def inspect
-      "#<TC:#{@target.nickname} obj=#{@target.default_object} actions=#{@action_names.inspect}>"
-    end
-
-    def method_missing(method,*args,&blk)
-      @target.send method, *args, &blk
-      self
-    end
-  end
-
-
   class Target
     include Log
+
+    autoload :Call, 'angry_mob/target/call'
 
     class << self
       def known_actions *actions
@@ -65,6 +30,48 @@ class AngryMob
         define_method(name, &blk)
       end
 
+      def actions_only?(args)
+        (args.keys - [:action,:actions,'action','actions']).empty?
+      end
+
+      def extract_args(*new_args)
+        args = Hashie::Mash.new(new_args.extract_options!)
+
+        unless new_args.empty?
+          args.default_object = (new_args.size > 1 ? new_args : new_args.first)
+        end
+
+        args
+      end
+
+      def instance_key(args)
+        "#{nickname}:#{args.default_object}"
+      end
+
+      # interpret arguments
+      # builds or retrieves an object instance
+      # checks arguments and warns for semantic nuance
+      # yields new target
+      # builds a TargetCall
+      def build_call(*new_args, &blk)
+        args = extract_args(*new_args)
+
+        instance_key = instance_key(args)
+        target       = yield(instance_key, nil)
+
+        if target && !actions_only?(args)
+          puts "Warning: you can't re-configure a target"
+        end
+
+        if target.nil?
+          target = new(args,&blk)
+          yield instance_key, target
+        end
+
+        target.build_call(args)
+      end
+
+
       def nickname
         @nickname
       end
@@ -81,16 +88,12 @@ class AngryMob
 
     attr_reader :node, :ctx, :args
 
-    def initialize(*new_args)
-      @args = Hashie::Mash.new(new_args.extract_options!)
-
-      unless new_args.empty?
-        @args.default_object = (new_args.size > 1 ? new_args : new_args.first)
-      end
+    def initialize(args)
+      @args = args
     end
 
-    def build_call(*args)
-      action_names = args.extract_options!.values_at(:action,:actions,'action','actions').compact
+    def build_call(args)
+      action_names = args.values_at(:action,:actions,'action','actions').compact
 
       action_names.delete_if {|a| a.blank?}
 
@@ -98,7 +101,7 @@ class AngryMob
 
       action_names.delete_if {|a| a.blank?}
 
-      TargetCall.new(self, action_names)
+      Target::Call.new(self, action_names)
     end
 
     def call(node,ctx=nil)

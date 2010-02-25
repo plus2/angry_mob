@@ -11,6 +11,7 @@ class AngryMob
       node = Node.new(nodename, attributes)
 
       compile!(node)
+      node.targets.tapp
       run!(node)
     end
 
@@ -62,8 +63,8 @@ class AngryMob
       @target_classes ||= Dictionary.new
     end
 
-    def singleton_target_instances
-      @singleton_target_instances ||= {}
+    def target_instances
+      @target_instances ||= {}
     end
 
     def generators
@@ -71,12 +72,6 @@ class AngryMob
     end
 
     def add_builtin_targets
-      #generators[:schedule_act] = lambda {|*args|
-      #  lambda {|node| node.schedule_act *args }
-      #}
-      #   generators[:act_now] = lambda {|*args|
-      #     lambda {|node| node.act_now *args }
-      #   }
     end
     
 
@@ -88,16 +83,13 @@ class AngryMob
       raise(TargetError, "no target nicknamed '#{nickname}' found") unless target_classes.key?(nickname)
       klass = target_classes[nickname]
 
-      # XXX - all targets should be "singletons", so that notifications can refer to them
-      #
-      target = if klass.ancestors.include?(AngryMob::SingletonTarget)
-        singleton_target_instances[nickname] ||= klass.new(*args,&block)
-        # XXX - update_args ?
-      else
-        klass.new(*args,&block)
-      end
-
-      target.build_call(*args)
+      klass.build_call(*args) {|key,instance|
+        if instance.nil?
+          target_instances[key]
+        else
+          target_instances[key] = instance
+        end
+      }
     end
     
   end
