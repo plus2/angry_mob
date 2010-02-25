@@ -1,5 +1,8 @@
 class AngryMob
+  class MobError < StandardError; end
   class Mob
+    include Log
+
     def initialize
       add_builtin_targets
     end
@@ -13,21 +16,35 @@ class AngryMob
 
     # bind selected targets to the node
     def compile!(node)
-
+      log "setting up node"
       setup_node[node] if setup_node
 
       # TODO - default act
+
+      log "compiling"
+
       while act_name = node.next_act
-        acts[act_name].compile!(node)
+        compile_act(node,act_name)
       end
+
+      log "compilation complete"
       
       self
     end
 
+    def compile_act(node,act_name)
+      log " - #{act_name}"
+
+      act_name = act_name.to_sym
+
+      act = acts[act_name] || raise(MobError, "act '#{act_name}' doesn't exist")
+
+      act.compile!(node)
+    end
+
     # runs targets bound to the node by compile!
     def run!(node)
-      node.targets.each {|t| t.call(node)}
-      node.delayed_targets.each {|t| t.call(node)}
+      node.run!
     end
 
     # node defaults
@@ -54,9 +71,12 @@ class AngryMob
     end
 
     def add_builtin_targets
-      generators[:schedule_act] = lambda {|*args|
-        lambda {|node| node.schedule_act *args }
-      }
+      #generators[:schedule_act] = lambda {|*args|
+      #  lambda {|node| node.schedule_act *args }
+      #}
+      #   generators[:act_now] = lambda {|*args|
+      #     lambda {|node| node.act_now *args }
+      #   }
     end
     
 
@@ -65,15 +85,19 @@ class AngryMob
         return g[ [ args, block ].flatten.compact ]
       end
 
-      raise(TargetError, "no target nicknamed #{nickname} found") unless target_classes.key?(nickname)
+      raise(TargetError, "no target nicknamed '#{nickname}' found") unless target_classes.key?(nickname)
       klass = target_classes[nickname]
 
-      if klass.ancestors.include?(AngryMob::SingletonTarget)
+      # XXX - all targets should be "singletons", so that notifications can refer to them
+      #
+      target = if klass.ancestors.include?(AngryMob::SingletonTarget)
         singleton_target_instances[nickname] ||= klass.new(*args,&block)
         # XXX - update_args ?
       else
         klass.new(*args,&block)
       end
+
+      target.build_call(*args)
     end
     
   end
