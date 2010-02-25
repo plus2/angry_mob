@@ -1,0 +1,26 @@
+#!/usr/bin/env ruby
+
+require 'pathname'
+root = Pathname(__FILE__).dirname.parent.expand_path
+
+$:.unshift root+'lib'
+require 'angry_mob'
+
+require 'rubygems'
+require 'yajl'
+
+json = Yajl::Parser.parse( Pathname("~/server_dna.json").expand_path.open )
+
+json['acts'] = ['plus2basics']
+
+begin
+
+mob_loader = AngryMob::MobLoader.new
+mob_loader.load("~/plus2mob")
+mob = mob_loader.to_mob
+mob.riot!( 'frog', json )
+
+rescue
+	puts "error [#{$!.class}] #{$!}"
+	$!.backtrace.each {|b| puts "  #{b}"}
+end
