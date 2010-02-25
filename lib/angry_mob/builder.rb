@@ -48,7 +48,35 @@ class AngryMob
     end
   end
 
-  class ActCreationContext
+  class NotifyBuilder
+    def initialize(mob,node)
+      @mob,@node = mob,node
+
+      @target = nil
+      @target_args = nil
+
+      @when   = :later
+      @actions = []
+    end
+
+    def method_missing(method,*args,&blk)
+      if ! @target
+        @target = method
+        @target_args = args
+
+      elsif method == :later || method == :now
+        @when = method
+
+      else
+        @actions << method
+
+      end
+
+      return self
+    end
+  end
+
+  class ActBuilder
     def initialize(name,&blk)
       @name = name
       @blk = blk
