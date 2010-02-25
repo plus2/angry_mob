@@ -84,17 +84,27 @@ class AngryMob
     end
 
     def default_object
-      @args[:default]
+      args.default_object
     end
 
     def merge_defaults(attrs)
-      # TODO - merge
-      @args.replace( attrs.update(@args) )
+      @args.replace( Hashie::Mash.new(attrs).update(@args) ) # reverse merge
     end
 
-    # TODO if?
-    # TODO unless?
+    def guards
+      @guards ||= []
+    end
 
+    def if?(label='if?{}',&block)
+      guards << [label,block]
+    end
+
+    def unless?(label='unless?{}',&block)
+      guards << [label, lambda { not yield }]
+    end
+
+
+    # delegate to the default object
     def method_missing(method,*args,&blk)
       if (dobj = default_object) && dobj.respond_to?(method)
         dobj.send(method,*args,&blk)
