@@ -11,17 +11,31 @@ class AngryMob
       self
     end
 
+    def TargetHelpers(&blk)
+      @helpers = Module.new(&blk).tapp
+    end
+
+    def add_class(nickname,superclass,&blk)
+      klass = @mob.target_classes[nickname] = Class.new(superclass, &blk)
+      if h = @helpers
+        klass.module_eval {
+          @nickname = nickname
+          include h
+        }
+      end
+    end
+
     def SingletonTarget(nickname,&blk)
-      @mob.target_classes[nickname] = Class.new(SingletonTarget, &blk)
+      add_class(nickname,SingletonTarget,&blk)
     end
 
     def Target(nickname,&blk)
-      @mob.target_classes[nickname] = Class.new(Target, &blk)
+      add_class(nickname,Target,&blk)
     end
     
     def method_missing(method,*args,&blk)
       if args.size == 1
-        @mob.target_classes[args.first] = Class.new(@mob.target_classes[method], &blk)
+        add_class(args.first, @mob.target_classes[method], &blk)
       else
         super
       end
