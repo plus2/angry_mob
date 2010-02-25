@@ -22,6 +22,10 @@ class AngryMob
       defined_at << c
     end
 
+    def merge_defaults(defaults)
+      @target.merge_defaults(defaults)
+    end
+
     def inspect
       "#<TC:#{@target.nickname} obj=#{@target.default_object} actions=#{@action_names.inspect}>"
     end
