@@ -1,6 +1,6 @@
 require 'pathname'
 class AngryMob
-  class TargetCreationContext
+  class TargetBuilder
     def initialize(&blk)
       @blk = blk
     end
@@ -103,7 +103,6 @@ class AngryMob
 
     def compile!(node)
       @node = node
-      @act = Act.new(@name)
       instance_exec node, &@blk
     end
 
@@ -111,8 +110,34 @@ class AngryMob
       @defaults ||= BuilderDefaults.new
     end
 
+    def notify
+      NotifyBuilder.new(@mob,@node)
+    end
+
+    def node
+      @node
+    end
+
+    def act_now *act_name
+      act_name.flatten!
+      act_name.compact!
+      act_name.each {|act_name| @mob.compile_act(@node, act_name)}
+    end
+
+    def schedule_act act_name
+      node.schedule_act(act_name)
+    end
+
+    if instance_methods.include? :gem
+      undef :gem
+    end
+
     def method_missing(method,*args,&blk)
+      # TODO - record where it was defined
       @node.targets << t = @mob.target(method,*args,&blk)
+
+      t.add_caller(caller(1).first) if t.respond_to?(:add_caller)
+      t.act = @name
 
       t.merge_defaults(defaults.defaults_for(method)) if t.respond_to?(:merge_defaults)
 
@@ -152,7 +177,7 @@ class AngryMob
     end
 
     def act(name, &blk)
-      acts[name] = blk
+      acts[name.to_sym] = blk
     end
 
     def targets(&blk)
@@ -167,11 +192,11 @@ class AngryMob
       }
 
       target_blocks.each do |blk|
-        TargetCreationContext.new(&blk).bind(mob)
+        TargetBuilder.new(&blk).bind(mob)
       end
 
       acts.each do |name,blk|
-        ActCreationContext.new(name,&blk).bind(mob)
+        ActBuilder.new(name,&blk).bind(mob)
       end
 
       mob
