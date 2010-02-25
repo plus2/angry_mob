@@ -1,6 +1,41 @@
 class AngryMob
   class TargetError < StandardError; end
+
+  class TargetCall # TODO  < Blankslate
+    attr_accessor :act
+    attr_reader :action_names
+
+    def initialize(target, action_names)
+      @target = target
+      @action_names = action_names
+    end
+
+    def call(node)
+      @target.call(node,self)
+    end
+
+    def defined_at
+      @defined_at ||= []
+    end
+    
+    def add_caller(c)
+      defined_at << c
+    end
+
+    def inspect
+      "#<TC:#{@target.nickname} obj=#{@target.default_object} actions=#{@action_names.inspect}>"
+    end
+
+    def method_missing(method,*args,&blk)
+      @target.send method, *args, &blk
+      self
+    end
+  end
+
+
   class Target
+    include Log
+
     class << self
       def known_actions *actions
         @known_actions = actions.flatten
@@ -25,58 +60,119 @@ class AngryMob
         actions[name] = true
         define_method(name, &blk)
       end
+
+      def nickname
+        @nickname
+      end
+
+      def to_s
+        "Target[#{nickname}]"
+      end
     end # class << self
 
 
-    def initialize(*args)
-      @args = if Hash === args.last then args.pop else {} end
-      unless args.empty?
-        @args[:default] = (args.size > 1 ? args : args.first)
+    def nickname
+      self.class.nickname
+    end
+
+    attr_reader :node, :ctx, :args
+
+    def initialize(*new_args)
+      @args = Hashie::Mash.new(new_args.extract_options!)
+
+      unless new_args.empty?
+        @args.default_object = (new_args.size > 1 ? new_args : new_args.first)
       end
     end
 
-    def call(node)
-      raise(TargetError, "No default action found") unless self.class.default_action
+    def build_call(*args)
+      action_names = args.extract_options!.values_at(:action,:actions,'action','actions').compact
 
-      noticing_changes(node) { send( self.class.default_action ) }
+      action_names.delete_if {|a| a.blank?}
+
+      action_names << self.class.default_action if action_names.blank?
+
+      action_names.delete_if {|a| a.blank?}
+
+      TargetCall.new(self, action_names)
     end
 
-    def [](*run_actions)
-      run_actions.each do |action|
-        raise(TargetError, "No '#{action}' action not found") unless self.class.actions.key?(action)
+    def call(node,ctx=nil)
+
+
+      if ctx
+        action_names = [ ctx.action_names ]
+      else
+        action_names = []
       end
 
-      lambda {|node|
-        noticing_changes(node) { run_actions.each {|action| send(action)} }
-      }
+      action_names.flatten!
+      action_names.compact!
+
+      action_names << self.class.default_action if action_names.blank?
+
+      action_names.each do |action|
+        raise(TargetError, "No '#{action}' action found") unless respond_to?(action)
+      end
+
+      noticing_changes(node,ctx) { action_names.each {|action| send(action)} }
     end
 
-    attr_reader :node
+    def log_divider(*msg)
+      log "#{nickname}(#{default_object}) #{msg * ' '} #{'-' * 20}"
+    end
 
-    def noticing_changes(node, &blk)
-      before = state
+
+    def before_state
+      @before_state ||= state
+    end
+
+    def noticing_changes(node, ctx, &blk)
+
+      log
+      log_divider 'start'
+
       @node = node
+      @ctx  = ctx
+
+      before_call if respond_to?(:before_call)
+
+
+      for label,guard in guards
+        unless guard.call
+          log "stopped by guard: #{label}"
+          return
+        end
+      end
+
+      before_state
+      log "before_state=#{before_state.inspect}"
 
       yield
 
-      if changed?(before)
+      if changed?
         changed 
         notify
+      else
+        log "target didn't change"
       end
     ensure
+      log_divider 'end  '
       @node = nil
+      @ctx  = nil
     end
 
     def notify
-      node.notify( @args[:notify] ) if @args[:notify]
+      node.notify( args.notify ) if args.notify
     end
 
     def changed
+      log "target changed"
       # no-op
     end
 
-    def changed?(pre_state)
-      pre_state != state
+    def changed?
+      before_state != state
     end
 
     def state
