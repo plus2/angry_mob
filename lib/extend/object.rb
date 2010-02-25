@@ -5,5 +5,10 @@ class Object
     print "#{tag} " if tag
     pp self
     self
-  end
+	end
+
+	def returning(obj)
+		yield obj
+		obj
+	end
 end
