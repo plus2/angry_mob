@@ -53,7 +53,7 @@ class AngryMob
       # checks arguments and warns for semantic nuance
       # yields new target
       # builds a TargetCall
-      def build_call(*new_args, &blk)
+      def build_call(mob, *new_args, &blk)
         args = extract_args(*new_args)
 
         instance_key = instance_key(args)
@@ -67,6 +67,8 @@ class AngryMob
           target = new(args,&blk)
           yield instance_key, target
         end
+
+        target.mob = mob
 
         target.build_call(args)
       end
@@ -87,13 +89,16 @@ class AngryMob
     end
 
     attr_reader :node, :ctx, :args
+    attr_accessor :mob
 
     def initialize(args)
       @args = args
     end
 
     def build_call(args)
-      action_names = args.values_at(:action,:actions,'action','actions').compact
+      action_names = args.delete_all_of(:action,:actions).flatten.compact
+
+      # TODO - handle :nothing action
 
       action_names.delete_if {|a| a.blank?}
 
@@ -123,6 +128,12 @@ class AngryMob
       end
 
       noticing_changes(node,ctx) { action_names.each {|action| send(action)} }
+    end
+
+    def call_target(nickname, *args)
+      call = mob.target(nickname,*args)
+      call.act = ctx.act
+      call.call(node)
     end
 
     def log_divider(*msg)
@@ -169,6 +180,10 @@ class AngryMob
       @ctx  = nil
     end
 
+    def mk_notify
+      NotifyBuilder.new(mob,node)
+    end
+
     def notify
       node.notify( args.notify ) if args.notify
     end
@@ -191,7 +206,7 @@ class AngryMob
     end
 
     def merge_defaults(attrs)
-      @args.replace( Hashie::Mash.new(attrs).update(@args) ) # reverse merge
+      @args.reverse_deep_update!(attrs)
     end
 
     def guards

@@ -13,12 +13,9 @@ class AngryMob
 				@target.call(node,self)
 			end
 
-			def defined_at
-				@defined_at ||= []
-			end
-			
-			def add_caller(c)
-				defined_at << c
+			attr_reader :defined_at
+			def set_caller(c)
+				@defined_at = c[/^([^:]+:\d+):/,1]
 			end
 
 			def merge_defaults(defaults)
@@ -26,7 +23,7 @@ class AngryMob
 			end
 
 			def inspect
-				"#<TC:#{@target.nickname} obj=#{@target.default_object} actions=#{@action_names.inspect}>"
+				"#<TC:#{@target.nickname} obj=#{@target.default_object} actions=#{@action_names.inspect} defined_at=#{@defined_at}>"
 			end
 
 			def method_missing(method,*args,&blk)
