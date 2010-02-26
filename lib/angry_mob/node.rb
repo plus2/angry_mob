@@ -39,35 +39,33 @@ class AngryMob
 
       while target = @running_targets.pop
 
-        log
+        log # blank line
 
         begin
           target.call(self)
         rescue Object
-          log "error calling #{target} defined_at=#{target.defined_at.inspect if target.respond_to?(:defined_at)}"
+          log "error calling #{target.inspect}"
           raise $!
         end
       end
 
+      log "running #{delayed_targets.size} delayed targets"
+      # TODO - uniq these
       delayed_targets.each {|t| t.call(self)}
     end
 
     def notify(notification)
       if AngryMob::NotifyBuilder === notification
-        # TODO
-        log "notify builder"
-      else
-        later = [ notification[:later] ].flatten.compact
-        now   = [ notification[:now  ] ].flatten.compact
-
-        now.each {|n| n.call(node)}
-
-        delayed_targets += later
+        if notification.later?
+          delayed_targets << notification.target_call
+        else
+          notification.target_call.call(self)
+        end
       end
     end
 
     def merge_defaults(attrs)
-      attributes.replace( Hashie::Mash.new(attrs).update(attributes) )
+      attributes.reverse_deep_update!(attrs)
     end
 
     def schedule_act(*acts)
