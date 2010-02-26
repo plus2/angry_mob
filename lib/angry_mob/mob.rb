@@ -11,7 +11,6 @@ class AngryMob
       node = Node.new(nodename, attributes)
 
       compile!(node)
-      node.targets.tapp
       run!(node)
     end
 
@@ -33,6 +32,7 @@ class AngryMob
       self
     end
 
+    # XXX - allow only once
     def compile_act(node,act_name)
       log " - #{act_name}"
 
@@ -83,7 +83,7 @@ class AngryMob
       raise(TargetError, "no target nicknamed '#{nickname}' found") unless target_classes.key?(nickname)
       klass = target_classes[nickname]
 
-      klass.build_call(*args) {|key,instance|
+      klass.build_call(self,*args) {|key,instance|
         if instance.nil?
           target_instances[key]
         else
