@@ -12,7 +12,7 @@ class AngryMob
     end
 
     def TargetHelpers(&blk)
-      @helpers = Module.new(&blk).tapp
+      @helpers = Module.new(&blk)
     end
 
     def add_class(nickname,superclass,&blk)
@@ -71,6 +71,24 @@ class AngryMob
 
       @when   = :later
       @actions = []
+    end
+
+    def later?
+      @when == :later
+    end
+
+    def target_call
+      # XXX seems like the wrong place for all this...
+      args = ( @target_args || [] ).dup
+      options = args.extract_options!
+
+      all_actions = options.delete_all_of(:actions,:action)
+
+      options[:actions] = [ all_actions, @actions ].flatten.compact.uniq
+
+      args << options
+
+      @mob.target(@target,*args)
     end
 
     def method_missing(method,*args,&blk)
@@ -133,10 +151,9 @@ class AngryMob
     end
 
     def method_missing(method,*args,&blk)
-      # TODO - record where it was defined
       @node.targets << t = @mob.target(method,*args,&blk)
 
-      t.add_caller(caller(1).first) if t.respond_to?(:add_caller)
+      t.set_caller(caller(1).first) if t.respond_to?(:set_caller)
       t.act = @name
 
       t.merge_defaults(defaults.defaults_for(method)) if t.respond_to?(:merge_defaults)
