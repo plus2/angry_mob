@@ -5,7 +5,7 @@ class AngryMob
 
     def initialize(name, attributes)
       self.name = name
-      self.attributes = Hashie::Mash.new(attributes)
+      self.attributes = AngryStruct.new(attributes)
     end
 
     def targets
@@ -74,7 +74,7 @@ class AngryMob
     end
 
     def method_missing(method,*args,&block)
-      attributes.send(method,*args)
+      attributes.__send__(method,*args)
     end
   end
 end

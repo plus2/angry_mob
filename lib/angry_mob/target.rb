@@ -35,7 +35,7 @@ class AngryMob
       end
 
       def extract_args(*new_args)
-        args = Hashie::Mash.new(new_args.extract_options!)
+        args = AngryStruct.new(new_args.extract_options!)
 
         unless new_args.empty?
           args.default_object = (new_args.size > 1 ? new_args : new_args.first)
