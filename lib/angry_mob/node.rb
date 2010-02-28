@@ -5,7 +5,7 @@ class AngryMob
 
     def initialize(name, attributes)
       self.name = name
-      self.attributes = AngryStruct.new(attributes)
+      self.attributes = AngryStruct[attributes]
     end
 
     def targets
