@@ -3,7 +3,7 @@ require 'extend'
 here = Pathname.here(__FILE__)
 
 class AngryMob
-  autoload :AngryStruct    , 'angry_mob/angry_struct'
+  autoload :AngryHash    , 'angry_mob/angry_struct'
 
   autoload :Mob            , 'angry_mob/mob'
   autoload :Node           , 'angry_mob/node'

@@ -5,7 +5,7 @@ class AngryMob
 
     def initialize(name, attributes)
       self.name = name
-      self.attributes = AngryStruct[attributes]
+      self.attributes = AngryHash[attributes]
     end
 
     def targets
@@ -22,7 +22,7 @@ class AngryMob
 
     def start_iterating!
       unless @iterating
-        @iterating_act_names = act_names.dup
+        @iterating_act_names = act_names.dup.tapp
         @iterating = true
       end
     end
