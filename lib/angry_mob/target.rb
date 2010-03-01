@@ -60,7 +60,8 @@ class AngryMob
         target       = yield(instance_key, nil)
 
         if target && !actions_only?(args)
-          puts "Warning: you can't re-configure a target"
+          puts "Warning: you can't re-configure a target nickname=#{nickname} args=#{args.inspect}"
+          caller[1..5].tapp
         end
 
         if target.nil?
@@ -110,8 +111,6 @@ class AngryMob
     end
 
     def call(node,ctx=nil)
-
-
       if ctx
         action_names = [ ctx.action_names ]
       else
@@ -140,18 +139,35 @@ class AngryMob
       log "#{nickname}(#{default_object}) #{msg * ' '} #{'-' * 20}"
     end
 
+    def do_validation!
+      validate!
+      unless @problems.blank?
+        @problems.each {|p| log "problem: #{p}"}
+        raise "target[#{nickname}] wasn't valid"
+      end
+    end
+
+    def validate!
+      problem!("The default object wasn't set") if default_object.blank?
+    end
+
+    def problem!(problem)
+      @problems ||= []
+      @problems << problem
+    end
 
     def before_state
       @before_state ||= state
     end
 
     def noticing_changes(node, ctx, &blk)
-
       log
       log_divider 'start'
 
       @node = node
       @ctx  = ctx
+
+      do_validation!
 
       before_call if respond_to?(:before_call)
 

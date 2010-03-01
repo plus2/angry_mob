@@ -21,6 +21,6 @@ mob = mob_loader.to_mob
 mob.riot!( 'frog', json )
 
 rescue
-	puts "error [#{$!.class}] #{$!}"
+	puts "\nerror [#{$!.class}] #{$!}"
 	$!.backtrace.each {|b| puts "  #{b}"}
 end

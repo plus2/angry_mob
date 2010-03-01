@@ -5,5 +5,8 @@ class AngryMob
 				"singleton:#{nickname}"
 			end
 		end
+
+    def validate!
+    end    
   end
 end
