@@ -44,7 +44,7 @@ class AngryMob
         begin
           target.call(self)
         rescue Object
-          log "error calling #{target.inspect}"
+          log "error [#{$!.class}] #{$!}\ncalling #{target.inspect}"
           raise $!
         end
       end

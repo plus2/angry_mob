@@ -60,7 +60,7 @@ class AngryMob
         target       = yield(instance_key, nil)
 
         if target && !actions_only?(args)
-          puts "Warning: you can't re-configure a target nickname=#{nickname} args=#{args.inspect}"
+          puts "Warning: you can't re-configure a target nickname=#{nickname} args=#{args.inspect[0..100]}"
           caller[1..5].tapp
         end
 
