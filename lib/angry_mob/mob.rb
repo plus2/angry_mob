@@ -4,10 +4,12 @@ class AngryMob
     include Log
 
     def initialize
+      @compiled_acts = {}
       add_builtin_targets
     end
 
     def riot!(nodename, attributes)
+      log "an AngryMob is rioting on '#{nodename}'"
       node = Node.new(nodename, attributes)
 
       compile!(node)
@@ -34,9 +36,16 @@ class AngryMob
 
     # XXX - allow only once
     def compile_act(node,act_name)
-      log " - #{act_name}"
-
       act_name = act_name.to_sym
+
+      if @compiled_acts[act_name]
+        log "   (already compiled #{act_name})"
+        return
+      end
+
+      @compiled_acts[act_name] = true
+
+      log " - #{act_name}"
 
       act = acts[act_name] || raise(MobError, "act '#{act_name}' doesn't exist")
 
