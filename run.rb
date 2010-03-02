@@ -1,4 +1,5 @@
-Server = "lstaging"
+# Server = "lstaging"
+Server = "frog"
 
 def sh(cmd)
   puts "sh: #{cmd}"
@@ -7,11 +8,11 @@ def sh(cmd)
 end
 
 def rsync(from,to)
-  sh "rsync -avz --exclude=.git #{from}/ #{Server}:#{to}/"
+  sh "rsync -avz --exclude=.git --delete #{from}/ #{Server}:#{to}/"
 end
 
 dos = { :am => true, :p2m => true, :dna => true  }
-dos = { :am => true, :p2m => true, :dna => false }
+dos = { :am => true, :p2m => true, :dna => true }
 
 dos[:am] && rsync('.'          , 'angry_mob')
 dos[:p2m] && rsync('../plus2mob', 'plus2mob')
