@@ -9,11 +9,18 @@ class AngryMob
     end
 
     def riot!(nodename, attributes)
-      log "an AngryMob is rioting on '#{nodename}'"
-      node = Node.new(nodename, attributes)
+      start = Time.now
+      log "An AngryMob is rioting on #{nodename}."
+      log
 
+      node = Node.new(nodename, attributes)
       compile!(node)
       run!(node)
+
+      log
+      log "beaten in #{Time.now-start}s"
+      log
+      log "#{nodename} has been beaten by an AngryMob. Have a nice day!"
     end
 
     # bind selected targets to the node
@@ -34,7 +41,6 @@ class AngryMob
       self
     end
 
-    # XXX - allow only once
     def compile_act(node,act_name)
       act_name = act_name.to_sym
 
