@@ -77,7 +77,7 @@ class AngryMob
         self[ key ] = args.first
 
       when ??
-        TrueClass === self[key]
+        !! self[key]
 
       when ?!
         self[key] = AngryHash.new
