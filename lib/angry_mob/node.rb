@@ -55,7 +55,7 @@ class AngryMob
     end
 
     def notify(notification)
-      if AngryMob::NotifyBuilder === notification
+      if AngryMob::Target::Notify === notification
         if notification.later?
           delayed_targets << notification.target_call
         else

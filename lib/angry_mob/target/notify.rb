@@ -1,5 +1,5 @@
 class AngryMob
-  class Builder
+  class Target
     class Notify
       def initialize(mob,node)
         @mob,@node = mob,node

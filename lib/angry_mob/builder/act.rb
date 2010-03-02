@@ -1,7 +1,5 @@
 class AngryMob
   class Builder
-    autoload :Defaults, "angry_mob/builder/defaults"
-    autoload :Notify  , "angry_mob/builder/notify"
 
     class Act
       def initialize(name,&blk)
@@ -20,11 +18,11 @@ class AngryMob
       end
 
       def defaults
-        @defaults ||= Defaults.new
+        @defaults ||= Target::Defaults.new
       end
 
       def notify
-        Notify.new(@mob,@node)
+        Target::Notify.new(@mob,@node)
       end
 
       def node

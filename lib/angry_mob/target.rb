@@ -4,6 +4,8 @@ class AngryMob
     include Log
 
     autoload :Call, 'angry_mob/target/call'
+    autoload :Defaults, "angry_mob/target/defaults"
+    autoload :Notify  , "angry_mob/target/notify"
 
     class << self
       def known_actions *actions
@@ -184,6 +186,8 @@ class AngryMob
 
       yield
 
+      log "after_state=#{state}"
+
       if changed?
         changed 
         notify
@@ -197,7 +201,7 @@ class AngryMob
     end
 
     def mk_notify
-      NotifyBuilder.new(mob,node)
+      Notify.new(mob,node)
     end
 
     def notify

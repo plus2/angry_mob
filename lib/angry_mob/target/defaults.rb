@@ -1,5 +1,5 @@
 class AngryMob
-  class Builder
+  class Target
     class Defaults
       def initialize
         @contexts = Hash.new {|h,k| h[k] = []}
