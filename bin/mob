@@ -7,18 +7,22 @@ $:.unshift root+'lib'
 require 'angry_mob'
 
 require 'rubygems'
-require 'yajl'
 
+require 'yajl'
 json = Yajl::Parser.parse( Pathname("~/server_dna.json").expand_path.open )
 
-json['acts'] = ['plus2basics']
+#require 'json'
+#json = JSON.parse( Pathname("~/server_dna.json").expand_path.read )
+
+json['acts'] = ['plus2/basics']
 
 begin
+  nodename = ARGV.shift || `hostname -s`.chomp
 
-mob_loader = AngryMob::MobLoader.new
-mob_loader.load("~/plus2mob")
-mob = mob_loader.to_mob
-mob.riot!( 'frog', json )
+  mob_loader = AngryMob::MobLoader.new
+  mob_loader.load("~/plus2mob")
+  mob = mob_loader.to_mob
+  mob.riot!( nodename, json )
 
 rescue
 	puts "\nerror [#{$!.class}] #{$!}"
