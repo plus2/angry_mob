@@ -1,26 +1,66 @@
 #!/usr/bin/env ruby
 
 require 'pathname'
-root = Pathname(__FILE__).dirname.parent.expand_path
+@root = Pathname(__FILE__).dirname.parent.expand_path
 
-$:.unshift root+'lib'
+$:.unshift @root+'lib'
 require 'angry_mob'
 
-require 'rubygems'
+module ArgvExtension
+  def opt name
+    self[ index("--#{name}")+1 ]
+  rescue
+    nil
+  end
 
-require 'yajl'
-json = Yajl::Parser.parse( Pathname("~/server_dna.json").expand_path.open )
+  def nodename
+    opt 'nodename'
+  end
 
-#require 'json'
-#json = JSON.parse( Pathname("~/server_dna.json").expand_path.read )
+  def act
+    opt 'act'
+  end
 
-json['acts'] = ['plus2/basics']
+  def json_file
+    opt 'json-file'
+  end
+
+  def mobs
+    mobs = []
+    each_with_index {|s,i| mobs << self[i+1] if s == '--mob'}
+    mobs
+  end
+end
+
+ARGV.extend ArgvExtension
+
+# TODO - merge in json snippets from the cmdline
+
+def require_json
+  json_root = @root+'vendor/json'
+  $: << (json_root+'lib')
+
+  require 'json/pure'
+end
+
+json ||= {}
+
+if json_file = ARGV.json_file
+  json_file = json_file.pathname.expand_path
+  require_json
+  json = JSON.parse( json_file.read )
+end
 
 begin
-  nodename = ARGV.shift || `hostname -s`.chomp
+  nodename = ARGV.nodename || `hostname -s`.chomp
+
+  if act = ARGV.act
+    json['acts'] = [ act ]
+  end
 
   mob_loader = AngryMob::MobLoader.new
-  mob_loader.load("~/plus2mob")
+  ARGV.mobs.each {|mob_path| mob_loader.load(mob_path)}
+
   mob = mob_loader.to_mob
   mob.riot!( nodename, json )
 

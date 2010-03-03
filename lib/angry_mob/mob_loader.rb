@@ -1,10 +1,11 @@
 class AngryMob
   class MobLoader
+    include Log
 
     def load(path)
       path = Pathname(path).expand_path
 
-      @builder = Builder.new
+      @builder ||= Builder.new
 
       load_lib(path)
       load_mob(path)
@@ -17,6 +18,8 @@ class AngryMob
     end
 
     def load_mob(path)
+      log "loading mob from #{path}"
+
       Pathname.glob(path+'mob/**/*.rb').each do |file|
         @builder.from_file(file)
       end
