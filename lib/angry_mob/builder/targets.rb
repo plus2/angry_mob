@@ -36,13 +36,14 @@ class AngryMob
 
       protected
       def add_class(nickname,superclass,&blk)
-        klass = @mob.target_classes[nickname] = Class.new(superclass, &blk)
-        if h = @helpers
-          klass.module_eval {
-            @nickname = nickname
-            include h
-          }
-        end
+        # TODO disallow duplicate definition
+        klass = @mob.target_classes[nickname.to_sym] = Class.new(superclass, &blk)
+        h = @helpers
+
+        klass.module_eval {
+          @nickname = nickname.to_sym
+          include h if h
+        }
       end
     end
   end
