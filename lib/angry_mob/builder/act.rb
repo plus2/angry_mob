@@ -7,8 +7,9 @@ class AngryMob
         @blk = blk
       end
 
-      def bind(mob)
+      def bind(mob,file)
         @mob = mob
+        @file = file
         mob.acts[@name] = self
       end
 
@@ -44,15 +45,17 @@ class AngryMob
         undef :gem
       end
 
-      def method_missing(method,*args,&blk)
-        @node.targets << t = @mob.target(method,*args,&blk)
+      def method_missing(nickname,*args,&blk)
+        target = @node.schedule_target(@mob, nickname, *args)
 
-        t.set_caller(caller(1).first) if t.respond_to?(:set_caller)
-        t.act = @name
+        # record call location information
+        target.set_caller(caller(1).first) if target.respond_to?(:set_caller)
+        target.act  = @name
+        target.file = @file
 
-        t.merge_defaults(defaults.defaults_for(method)) if t.respond_to?(:merge_defaults)
+        target.merge_defaults(defaults.defaults_for(nickname)) if target.respond_to?(:merge_defaults)
 
-        t
+        target
       end
     end
   end
