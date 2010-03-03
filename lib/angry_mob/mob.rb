@@ -10,6 +10,7 @@ class AngryMob
 
     def riot!(nodename, attributes)
       start = Time.now
+      log
       log "An AngryMob is rioting on #{nodename}."
       log
 
@@ -28,10 +29,7 @@ class AngryMob
       log "setting up node"
       setup_node[node] if setup_node
 
-      # TODO - default act
-
       log "compiling"
-
       while act_name = node.next_act
         compile_act(node,act_name)
       end
@@ -88,14 +86,13 @@ class AngryMob
 
     def add_builtin_targets
     end
-    
 
     def target(nickname, *args, &block)
       if g = generators[nickname]
         return g[ [ args, block ].flatten.compact ]
       end
 
-      raise(TargetError, "no target nicknamed '#{nickname}' found") unless target_classes.key?(nickname)
+      raise(MobError, "no target nicknamed '#{nickname}' found\n#{target_classes.keys.inspect}") unless target_classes.key?(nickname)
       klass = target_classes[nickname]
 
       klass.build_call(self,*args) {|key,instance|

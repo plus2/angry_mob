@@ -1,6 +1,6 @@
 
 class AngryMob
-  class Node < Struct.new(:name,:attributes)
+  class Node < Struct.new(:name,:attributes,:resource_locator)
     include Log
 
     def initialize(name, attributes)
@@ -54,6 +54,8 @@ class AngryMob
       delayed_targets.each {|t| t.call(self)}
     end
 
+
+    # handles a notification, by either placing it on the queue or calling it now
     def notify(notification)
       if AngryMob::Target::Notify === notification
         if notification.later?
@@ -61,6 +63,8 @@ class AngryMob
         else
           notification.target_call.call(self)
         end
+      elsif Proc === notification
+        notification[self]
       end
     end
 
@@ -71,6 +75,11 @@ class AngryMob
     def schedule_act(*acts)
       raise(CompilationError, "schedule_act called when not compiling") unless @iterating
       @iterating_act_names += acts
+    end
+
+    def schedule_target(mob,nickname,*args)
+      targets << target = mob.target(nickname,*args)
+      target
     end
 
     def method_missing(method,*args,&block)
