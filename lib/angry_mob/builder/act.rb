@@ -26,6 +26,11 @@ class AngryMob
         Target::Notify.new(@mob,@node)
       end
 
+      def flow(*args,&blk)
+        args.options.update :mob => @mob, :node => @node, :act => self
+        Target::Flow.new *args, &blk
+      end
+
       def node
         @node
       end

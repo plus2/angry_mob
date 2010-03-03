@@ -3,9 +3,10 @@ class AngryMob
   class Target
     include Log
 
-    autoload :Call, 'angry_mob/target/call'
+    autoload :Call    , 'angry_mob/target/call'
     autoload :Defaults, "angry_mob/target/defaults"
     autoload :Notify  , "angry_mob/target/notify"
+    autoload :Flow    , "angry_mob/target/flow"
 
     class << self
       def known_actions *actions
@@ -98,17 +99,25 @@ class AngryMob
       @args = args
     end
 
+
+    # call generation
+
+    def normalise_actions(actions)
+      actions = [ actions ].flatten.compact.map {|a| a.to_sym}.uniq.reject {|a| a.blank?}
+
+      if actions.empty? && self.class.default_action
+        actions << self.class.default_action.to_s
+      end
+
+      if actions.include? :nothing
+        [:nothing]
+      else
+        actions
+      end
+    end
+
     def build_call(args)
-      action_names = args.delete_all_of(:action,:actions).flatten.compact
-
-      # TODO - handle :nothing action
-
-      action_names.delete_if {|a| a.blank?}
-
-      action_names << self.class.default_action if action_names.blank?
-
-      action_names.delete_if {|a| a.blank?}
-
+      action_names = normalise_actions(args.delete_all_of(:action,:actions))
       Target::Call.new(self, action_names)
     end
 
@@ -119,10 +128,13 @@ class AngryMob
         action_names = []
       end
 
-      action_names.flatten!
-      action_names.compact!
+      action_names = normalise_actions(action_names)
 
-      action_names << self.class.default_action if action_names.blank?
+      log "calling #{nickname} with=#{action_names.inspect}"
+      if action_names.include?(:nothing)
+        log "not running (no actions requested)"
+        return
+      end
 
       action_names.each do |action|
         raise(TargetError, "No '#{action}' action found") unless respond_to?(action)
@@ -137,10 +149,15 @@ class AngryMob
       call.call(node)
     end
 
+
+    # runtime
+
     def log_divider(*msg)
       log "#{nickname}(#{default_object}) #{msg * ' '} #{'-' * 20}"
     end
 
+
+    # runtime validation
     def do_validation!
       validate!
       unless @problems.blank?
@@ -149,6 +166,7 @@ class AngryMob
       end
     end
 
+    # default validation
     def validate!
       problem!("The default object wasn't set") if default_object.blank?
     end
@@ -162,6 +180,8 @@ class AngryMob
       @before_state ||= state
     end
 
+
+    # executes actions with all the trimmings
     def noticing_changes(node, ctx, &blk)
       log
       log_divider 'start'
@@ -186,7 +206,7 @@ class AngryMob
 
       yield
 
-      log "after_state=#{state}"
+      log "after_state=#{state.inspect}"
 
       if changed?
         changed 
@@ -204,25 +224,52 @@ class AngryMob
       Notify.new(mob,node)
     end
 
+    # delegates notification to the node
     def notify
+      puts "notifying!" 
       node.notify( args.notify ) if args.notify
     end
 
+    # called when state changes after actions are called
+    # default implementation is a no-op
     def changed
       log "target changed"
       # no-op
     end
 
+    # has the state changed?
     def changed?
       before_state != state
     end
 
+    # returns the state of the target
+    # default implementation is a random number (i.e. it always changes)
     def state
-      {}
+      {
+        :rand => rand
+      }
     end
 
+    # returns the default object
+    # targets can customise this
+    # the default is the default_object argument. 
+    # See #initialize for how the default_option argument is set.
     def default_object
-      args.default_object
+      @default_object ||= default_object!
+    end
+
+    def default_object!
+      case args.default_object
+      when Proc
+        args.default_object[]
+      else
+        args.default_object
+      end
+    end
+
+    # delegates to the resource locator
+    def resource(name)
+      node.resource_locator[self,name]
     end
 
     def merge_defaults(attrs)
@@ -233,10 +280,12 @@ class AngryMob
       @guards ||= []
     end
 
+    # adds an if? guard
     def if?(label='if?{}',&block)
       guards << [label,block]
     end
 
+    # adds an unless? guard
     def unless?(label='unless?{}',&block)
       guards << [label, lambda { not yield }]
     end

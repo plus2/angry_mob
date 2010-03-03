@@ -1,8 +1,7 @@
 class AngryMob
 	class Target
 		class Call # TODO  < Blankslate
-			attr_accessor :act
-			attr_reader :action_names
+			attr_accessor :act, :file, :action_names
 
 			def initialize(target, action_names)
 				@target = target
@@ -12,6 +11,10 @@ class AngryMob
 			def call(node)
 				@target.call(node,self)
 			end
+
+      def clear_actions!
+        @action_names = []
+      end
 
 			attr_reader :defined_at
 			def set_caller(c)
@@ -28,7 +31,6 @@ class AngryMob
 
 			def method_missing(method,*args,&blk)
 				@target.send method, *args, &blk
-				self
 			end
 		end
 	end
