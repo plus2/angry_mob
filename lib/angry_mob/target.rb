@@ -204,7 +204,11 @@ class AngryMob
       before_state
       log "before_state=#{before_state.inspect}"
 
-      yield
+      if node.dry_run?
+        log "DRY RUN: skipping action"
+      else
+        yield
+      end
 
       log "after_state=#{state.inspect}"
 

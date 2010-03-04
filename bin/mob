@@ -13,12 +13,33 @@ module ArgvExtension
     nil
   end
 
+  def shopt name
+    self[ index("-#{name}")+1 ]
+  rescue
+    nil
+  end
+
+  def flag? name
+    !! index("--#{name}")
+  end
+
+
   def nodename
     opt 'nodename'
   end
 
+  def dry_run?
+    flag? 'dry-run'
+  end
+
   def act
     opt 'act'
+  end
+
+  def defines
+    defines = []
+    each_with_index {|s,i| defines << self[i+1] if s == '-D'}
+    defines
   end
 
   def json_file
@@ -43,26 +64,33 @@ def require_json
   require 'json/pure'
 end
 
-json ||= {}
+attributes ||= {}
 
 if json_file = ARGV.json_file
   json_file = json_file.pathname.expand_path
   require_json
-  json = JSON.parse( json_file.read )
+  attributes = JSON.parse( json_file.read )
 end
 
-begin
-  nodename = ARGV.nodename || `hostname -s`.chomp
+attributes = AngryMob::AngryHash[attributes]
 
-  if act = ARGV.act
-    json['acts'] = [ act ]
-  end
+nodename = ARGV.nodename || `hostname -s`.chomp
+
+if act = ARGV.act
+  attributes.acts = [ act ]
+end
+
+ARGV.defines.each {|define| attributes.merge_string define}
+
+attributes.dry_run = ARGV.dry_run?
+
+begin
 
   mob_loader = AngryMob::MobLoader.new
   ARGV.mobs.each {|mob_path| mob_loader.load(mob_path)}
 
   mob = mob_loader.to_mob
-  mob.riot!( nodename, json )
+  mob.riot!( nodename, attributes )
 
 rescue
 	puts "\nerror [#{$!.class}] #{$!}"
