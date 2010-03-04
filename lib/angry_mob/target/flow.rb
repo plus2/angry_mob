@@ -1,40 +1,26 @@
 class AngryMob
   class Target
-    class Flow < BlankSlate
-      def initialize(*args,&blk)
-        @options = args.extract_options!
+    class Flow
+      def initialize
         @targets = []
-
-        @defining = true
-        yield self
-        @defining = false
       end
 
-      def __mob ; @options[:mob ] end
-      def __node; @options[:node] end
+      def <<(call)
+        @targets << [call, call.args.dup]
 
-      def method_missing(nickname,*args,&blk)
-        return super unless @defining
+        this  = self
+        index = @targets.size-1
 
-        opts = args.options
+        call.args.update(:notify => lambda {|node| this.notified(node, index)})
 
-        this          = self
-        index         = @targets.size
-        original_opts = opts.dup
-        
-        opts.update(:notify => lambda {|node| this.__notified(node, index)})
-
-        unless @targets.empty?
-          opts.update(:action => :nothing)
+        unless @targets.size == 1
+          call.action_names = [:nothing]
         end
 
-        target = __node.schedule_target(__mob,nickname,*args)
-        @targets << [target, original_opts]
-
-        target
+        call
       end
 
-      def __notified(node,index)
+      def notified(node,index)
         target,opts = *@targets[index+1]
 
         if target

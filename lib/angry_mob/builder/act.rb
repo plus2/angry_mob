@@ -2,6 +2,8 @@ class AngryMob
   class Builder
 
     class Act
+      include Log
+
       def initialize(name,&blk)
         @name = name
         @blk = blk
@@ -26,11 +28,6 @@ class AngryMob
         Target::Notify.new(@mob,@node)
       end
 
-      def flow(*args,&blk)
-        args.options.update :mob => @mob, :node => @node, :act => self
-        Target::Flow.new *args, &blk
-      end
-
       def node
         @node
       end
@@ -51,7 +48,7 @@ class AngryMob
       end
 
       def method_missing(nickname,*args,&blk)
-        target = @node.schedule_target(@mob, nickname, *args)
+        target = @node.schedule_target(@mob, nickname, *args, &blk)
 
         # record call location information
         target.set_caller(caller(1).first) if target.respond_to?(:set_caller)

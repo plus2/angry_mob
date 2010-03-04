@@ -77,8 +77,8 @@ class AngryMob
       @iterating_act_names += acts
     end
 
-    def schedule_target(mob,nickname,*args)
-      targets << target = mob.target(nickname,*args)
+    def schedule_target(mob,nickname,*args,&blk)
+      targets << target = mob.target(nickname,*args,&blk)
       target
     end
 

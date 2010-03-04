@@ -12,6 +12,15 @@ class AngryMob
 				@target.call(node,self)
 			end
 
+      def >(other)
+        unless @flow
+          @flow = Flow.new
+          @flow << self
+        end
+        @flow << other
+        self
+      end
+
       def clear_actions!
         @action_names = []
       end
@@ -30,7 +39,12 @@ class AngryMob
 			end
 
 			def method_missing(method,*args,&blk)
-				@target.send method, *args, &blk
+				rv = @target.send method, *args, &blk
+        if rv === @target
+          self
+        else
+          rv
+        end
 			end
 		end
 	end

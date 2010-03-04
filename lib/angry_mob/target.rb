@@ -287,11 +287,13 @@ class AngryMob
     # adds an if? guard
     def if?(label='if?{}',&block)
       guards << [label,block]
+      self
     end
 
     # adds an unless? guard
     def unless?(label='unless?{}',&block)
       guards << [label, lambda { not yield }]
+      self
     end
 
 
