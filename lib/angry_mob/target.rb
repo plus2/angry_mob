@@ -38,7 +38,7 @@ class AngryMob
       end
 
       def extract_args(*new_args)
-        args = AngryHash[new_args.extract_options!]
+        args = AngryHash[new_args.extract_options!] #.tap {|t| puts "#{self.inspect} extracted #{t.inspect[0..200]}"}
 
         unless new_args.empty?
           args.default_object = (new_args.size > 1 ? new_args : new_args.first)
@@ -130,7 +130,6 @@ class AngryMob
 
       action_names = normalise_actions(action_names)
 
-      log "calling #{nickname} with=#{action_names.inspect}"
       if action_names.include?(:nothing)
         log "not running (no actions requested)"
         return
@@ -230,7 +229,6 @@ class AngryMob
 
     # delegates notification to the node
     def notify
-      puts "notifying!" 
       node.notify( args.notify ) if args.notify
     end
 
