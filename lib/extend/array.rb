@@ -15,4 +15,16 @@ class Array
       opts
     end
   end
+
+  def norm
+    n = flatten
+    n.compact!
+    n
+  end
+
+  def norm!
+    flatten!
+    compact!
+    self
+  end
 end
