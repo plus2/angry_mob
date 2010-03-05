@@ -4,19 +4,21 @@ class AngryMob
     class Act
       include Log
 
+      attr_reader :mob
+
       def initialize(name,&blk)
         @name = name
         @blk = blk
       end
 
       def bind(mob,file)
-        @mob = mob
+        @mob  = mob
         @file = file
+
         mob.acts[@name] = self
       end
 
-      def compile!(node)
-        @node = node
+      def compile!
         instance_exec node, &@blk
       end
 
@@ -25,22 +27,26 @@ class AngryMob
       end
 
       def notify
-        Target::Notify.new(@mob,@node)
+        Target::Notify.new(@mob)
+      end
+      
+      # directly schedule a call on the delayed list
+      def later
+        returning(Target::Notify.new(@mob)) do |n|
+          @mob.scheduler.schedule_delayed_call n
+        end
       end
 
       def node
-        @node
+        mob.node
       end
 
       def act_now *act_name
-        act_name.flatten!
-        act_name.compact!
-        # XXX - only allow once
-        act_name.each {|act_name| @mob.compile_act(@node, act_name)}
+        act_name.norm!.each {|act_name| mob.compile_act(act_name)}
       end
 
       def schedule_act act_name
-        node.schedule_act(act_name)
+        mob.act_scheduler.schedule_act(act_name)
       end
 
       if instance_methods.include? :gem
@@ -48,7 +54,7 @@ class AngryMob
       end
 
       def method_missing(nickname,*args,&blk)
-        target = @node.schedule_target(@mob, nickname, *args, &blk)
+        target = mob.scheduler.schedule_target(nickname, *args, &blk)
 
         # record call location information
         target.set_caller(caller(1).first) if target.respond_to?(:set_caller)

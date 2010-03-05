@@ -9,9 +9,9 @@ class AngryMob
     autoload :Flow    , "angry_mob/target/flow"
 
     class << self
+      # TODO = build NotImplemented raising stubs
       def known_actions *actions
         @known_actions = actions.flatten
-        # TODO = build NotImplemented raising stubs
       end
 
       def default_action(name=nil, &blk)
@@ -33,43 +33,56 @@ class AngryMob
         define_method(name, &blk)
       end
 
+
+      # building calls to this target
+
+      # does this action has comprise only actions?
       def actions_only?(args)
         (args.keys - [:action,:actions,'action','actions']).empty?
       end
 
       def extract_args(*new_args)
-        args = AngryHash[new_args.extract_options!] #.tap {|t| puts "#{self.inspect} extracted #{t.inspect[0..200]}"}
+        args = AngryHash[new_args.extract_options!]
 
-        unless new_args.empty?
-          args.default_object = (new_args.size > 1 ? new_args : new_args.first)
+        if default_object = extract_default_object(new_args,args)
+          args.default_object = default_object
         end
 
         args
       end
 
-      def instance_key(args)
-        "#{nickname}:#{args.default_object}"
+      # extension point: extracts the default_object from the args
+      def extract_default_object(arg_list, arg_hash)
+        unless arg_list.empty?
+          (arg_list.size > 1 ? arg_list : arg_list.first)
+        end
       end
 
+      # extension point: makes a unique key for this instance
+      def instance_key(args)
+        "#{nickname}:#{args.default_object.to_s}"
+      end
+
+      # build a call proxy for the named target
+      #
       # interpret arguments
       # builds or retrieves an object instance
-      # checks arguments and warns for semantic nuance
+      # checks arguments - raises if semantics are violated
       # yields new target
       # builds a TargetCall
       def build_call(mob, *new_args, &blk)
         args = extract_args(*new_args)
 
         instance_key = instance_key(args)
-        target       = yield(instance_key, nil)
+        target       = yield(instance_key, nil) # fetch an existing instance
 
         if target && !actions_only?(args)
-          puts "Warning: you can't re-configure a target nickname=#{nickname} args=#{args.inspect[0..100]}"
-          caller[1..5].tapp
+          raise TargetError, "you can't re-configure a target nickname=#{nickname} args=#{args.inspect[0..100]}"
         end
 
         if target.nil?
           target = new(args,&blk)
-          yield instance_key, target
+          yield instance_key, target # set a new instance
         end
 
         target.mob = mob
@@ -92,12 +105,13 @@ class AngryMob
       self.class.nickname
     end
 
-    attr_reader :node, :ctx, :args
+    attr_reader :ctx, :args
     attr_accessor :mob
 
     def initialize(args)
       @args = args
     end
+
 
 
     # call generation
@@ -121,7 +135,7 @@ class AngryMob
       Target::Call.new(self, action_names)
     end
 
-    def call(node,ctx=nil)
+    def call(mob,ctx=nil)
       if ctx
         action_names = [ ctx.action_names ]
       else
@@ -139,22 +153,17 @@ class AngryMob
         raise(TargetError, "No '#{action}' action found") unless respond_to?(action)
       end
 
-      noticing_changes(node,ctx) { action_names.each {|action| send(action)} }
+      noticing_changes(mob,ctx) { action_names.each {|action| send(action)} }
     end
 
     def call_target(nickname, *args)
       call = mob.target(nickname,*args)
       call.act = ctx.act
-      call.call(node)
+      call.call(mob)
     end
 
 
     # runtime
-
-    def log_divider(*msg)
-      log "#{nickname}(#{default_object}) #{msg * ' '} #{'-' * 20}"
-    end
-
 
     # runtime validation
     def do_validation!
@@ -181,12 +190,14 @@ class AngryMob
 
 
     # executes actions with all the trimmings
-    def noticing_changes(node, ctx, &blk)
+    def noticing_changes(mob, ctx, &blk)
       log
-      log_divider 'start'
+      log "+#{'-' * 20}"
+      log "  #{nickname}(#{default_object})"
+      log
 
-      @node = node
-      @ctx  = ctx
+      @mob = mob
+      @ctx = ctx
 
       do_validation!
 
@@ -196,12 +207,13 @@ class AngryMob
       for label,guard in guards
         unless guard.call
           log "stopped by guard: #{label}"
+          log_end
           return
         end
       end
 
       before_state
-      log "before_state=#{before_state.inspect}"
+      debug "before_state=#{before_state.inspect}"
 
       if node.dry_run?
         log "DRY RUN: skipping action"
@@ -209,7 +221,7 @@ class AngryMob
         yield
       end
 
-      log "after_state=#{state.inspect}"
+      debug "after_state=#{state.inspect}"
 
       if changed?
         changed 
@@ -217,19 +229,32 @@ class AngryMob
       else
         log "target didn't change"
       end
+
+      log_end
+      
     ensure
-      log_divider 'end  '
-      @node = nil
+      @mob = nil
       @ctx  = nil
     end
 
-    def mk_notify
-      Notify.new(mob,node)
+    def log_end
+      log
+      log "  #{nickname}(#{default_object})"
+      log "#{'-' * 21}"
+      log
     end
 
-    # delegates notification to the node
+    def node
+      @mob.node
+    end
+
+    def mk_notify
+      Notify.new(mob)
+    end
+
+    # delegates notification to the target scheduler
     def notify
-      node.notify( args.notify ) if args.notify
+      mob.scheduler.notify( args.notify ) if args.notify
     end
 
     # called when state changes after actions are called

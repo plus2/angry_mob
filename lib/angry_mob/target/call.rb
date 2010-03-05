@@ -8,8 +8,8 @@ class AngryMob
 				@action_names = action_names
 			end
 
-			def call(node)
-				@target.call(node,self)
+			def call(mob)
+				@target.call(mob,self)
 			end
 
       def >(other)

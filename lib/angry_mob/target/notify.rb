@@ -1,8 +1,8 @@
 class AngryMob
   class Target
     class Notify
-      def initialize(mob,node)
-        @mob,@node = mob,node
+      def initialize(mob)
+        @mob = mob
 
         @target = nil
         @target_args = nil
@@ -18,13 +18,11 @@ class AngryMob
       def target_call
         # XXX seems like the wrong place for all this...
         args = ( @target_args || [] ).dup
-        options = args.extract_options!
+        options = args.options
 
         all_actions = options.delete_all_of(:actions,:action)
 
-        options[:actions] = [ all_actions, @actions ].flatten.compact.uniq
-
-        args << options
+        options.update(:actions => [ all_actions, @actions ].flatten.compact.uniq)
 
         @mob.target(@target,*args)
       end

@@ -3,8 +3,9 @@ class AngryMob
   class Mob
     include Log
 
+    attr_reader :node, :scheduler, :act_scheduler
+
     def initialize
-      @compiled_acts = {}
       add_builtin_targets
     end
 
@@ -14,9 +15,12 @@ class AngryMob
       log "An AngryMob is rioting on #{nodename}."
       log
 
-      node = Node.new(nodename, attributes)
-      compile!(node)
-      run!(node)
+      @node          = Node.new(nodename, attributes)
+      @scheduler     = TargetScheduler.new(self)
+      @act_scheduler = ActScheduler.new(node)
+
+      compile!
+      run!
 
       log
       log "beaten in #{Time.now-start}s"
@@ -25,13 +29,13 @@ class AngryMob
     end
 
     # bind selected targets to the node
-    def compile!(node)
+    def compile!
       log "setting up node"
       setup_node[node] if setup_node
 
       log "compiling"
-      while act_name = node.next_act
-        compile_act(node,act_name)
+      act_scheduler.each_act do |act_name|
+        compile_act(act_name)
       end
 
       log "compilation complete"
@@ -39,27 +43,35 @@ class AngryMob
       self
     end
 
-    def compile_act(node,act_name)
+    def compiled_acts
+      @compiled_acts ||= {}
+    end
+
+    def compile_act(act_name)
       act_name = act_name.to_sym
 
-      if @compiled_acts[act_name]
+      if compiled_acts[act_name]
         log "   (already compiled #{act_name})"
         return
       end
 
-      @compiled_acts[act_name] = true
+      compiled_acts[act_name] = true
 
       log " - #{act_name}"
 
       act = acts[act_name] || raise(MobError, "act '#{act_name}' doesn't exist")
 
-      act.compile!(node)
+      act.compile!
     end
 
     # runs targets bound to the node by compile!
-    def run!(node)
-      node.run!
+    def run!
+      scheduler.run!
     end
+
+
+    # building
+    # builder populates the following with definition blocks
 
     # node defaults
     attr_accessor :setup_node
@@ -68,7 +80,6 @@ class AngryMob
     def acts
       @acts ||= Dictionary.new
     end
-
 
     # target classes
     def target_classes
@@ -94,6 +105,8 @@ class AngryMob
 
       raise(MobError, "no target nicknamed '#{nickname}' found\n#{target_classes.keys.inspect}") unless target_classes.key?(nickname)
       klass = target_classes[nickname]
+
+      args.options[:default_block] = block if block_given?
 
       klass.build_call(self,*args) {|key,instance|
         if instance.nil?
