@@ -1,7 +1,7 @@
 require 'pathname'
 here = Pathname(__FILE__).dirname
-require here+'extend'
 
+require 'angry_mob/extend'
 
 class AngryMob
   autoload :AngryHash    , 'angry_mob/angry_struct'

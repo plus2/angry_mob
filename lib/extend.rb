@@ -1,8 +1,0 @@
-require 'extend/blank'
-require 'extend/dictionary'
-require 'extend/object'
-require 'extend/array'
-require 'extend/string'
-require 'extend/pathname'
-require 'extend/hash'
-require 'extend/blankslate'
