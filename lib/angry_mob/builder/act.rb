@@ -18,8 +18,9 @@ class AngryMob
         mob.acts[@name] = self
       end
 
+      #reveal :instance_eval
       def compile!
-        instance_exec node, &@blk
+        instance_eval &@blk
       end
 
       def defaults
@@ -32,9 +33,9 @@ class AngryMob
       
       # directly schedule a call on the delayed list
       def later
-        returning(Target::Notify.new(@mob)) do |n|
-          @mob.scheduler.schedule_delayed_call n
-        end
+        n = Target::Notify.new(@mob)
+        @mob.scheduler.schedule_delayed_call n
+        n
       end
 
       def node
@@ -49,11 +50,16 @@ class AngryMob
         mob.act_scheduler.schedule_act(act_name)
       end
 
-      if instance_methods.include? :gem
-        undef :gem
+      # bundler + rubygems clusterfuck
+      def gem(*args,&blk)
+        __compile_target(:gem,*args,&blk)
       end
 
       def method_missing(nickname,*args,&blk)
+        __compile_target(nickname,*args,&blk)
+      end
+
+      def __compile_target(nickname,*args,&blk)
         target = mob.scheduler.schedule_target(nickname, *args, &blk)
 
         # record call location information
