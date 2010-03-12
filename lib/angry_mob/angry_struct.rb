@@ -43,6 +43,11 @@ class AngryMob
       replace(self.class.__convert_value(other_hash).deep_merge(self))
     end
 
+    def delete_all_of(*keys)
+      keys.map {|k| delete(k.to_s)}.compact.uniq
+    end
+
+
 
     def key?(key)
       super(__convert_key(key))
