@@ -8,8 +8,28 @@ class AngryMob
       self.attributes = AngryHash[attributes]
     end
 
-    def merge_defaults(attrs)
-      attributes.reverse_deep_update!(attrs)
+    def merge_defaults!(attrs)
+      attributes.reverse_deep_merge!(attrs)
+    end
+
+    def consolidate!
+      node = self
+      __consolidate_hash(attributes,{})
+    end
+
+    def __consolidate_hash(hash,seen)
+
+      return if seen.key?(hash)
+      seen[hash] = true
+
+      hash.each do |key,value|
+        case value
+        when Hash
+          __consolidate_hash(value,seen)
+        when Proc
+          hash[key] = value[self]
+        end
+      end
     end
 
     def method_missing(method,*args,&block)

@@ -33,6 +33,8 @@ class AngryMob
       log "setting up node"
       setup_node[node] if setup_node
 
+      node.consolidate!
+
       log "compiling"
       act_scheduler.each_act do |act_name|
         compile_act(act_name)
