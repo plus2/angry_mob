@@ -100,14 +100,14 @@ class AngryHash < Hash
     v = v.to_hash if v.respond_to?(:to_hash)
 
     case v
-    when AngryHash
-      v
     when Hash
       __convert(v)
     when Array
-      v.map {|v| Hash === v ? __convert_value(v) : v}
-    else
+      v.map {|v| __convert_value(v)}
+    when Fixnum,Symbol,NilClass,TrueClass,FalseClass,Float
       v
+    else
+      v.dup
     end
   end
   
