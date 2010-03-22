@@ -16,7 +16,9 @@ class AngryMob
 		end
 
 		def debug(*msg)
-			# puts "* %-20s| #{msg * ' '}" % __class_to_s
+			puts "* %-20s| #{msg * ' '}" % __class_to_s
+		rescue
+			puts "Debug #{self.class.to_s} | #{msg * ' '}"
 		end
 	end
 end

@@ -63,7 +63,7 @@ class AngryMob
         target = mob.scheduler.schedule_target(nickname, *args, &blk)
 
         # record call location information
-        target.set_caller(caller(1).first) if target.respond_to?(:set_caller)
+        target.set_caller(caller(2).first) if target.respond_to?(:set_caller)
         target.act  = @name
         target.file = @file
 

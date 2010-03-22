@@ -36,6 +36,8 @@ class AngryMob
 
 			def inspect
 				"#<TC:#{@target.nickname} obj=#{@target.default_object} actions=#{@action_names.inspect} defined_at=#{@defined_at}>"
+      rescue Object
+        "#<TC:#{@target.class.to_s} defined_at=#{@defined_at} inspect_raised=true>"
 			end
 
 			def method_missing(method,*args,&blk)

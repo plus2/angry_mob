@@ -1,7 +1,7 @@
 @home = '/root'
 @sudo = false
 
-server = 'frog-clean'
+server = 'amc-store'
 @dry_run = false
 
 case server
@@ -24,6 +24,11 @@ when 'amc-exam'
   @server   = "amcexam"
   @nodename = "amc-exam"
   @sudo = true
+
+when 'frog'
+  @server = "frog"
+  @server = "root@frog"
+  @nodename = "frog"
 
 when 'frog-clean'
   @server = "frog"
