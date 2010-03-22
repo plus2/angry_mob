@@ -74,7 +74,8 @@ class AngryHash < Hash
       !! self[key]
 
     when ?!
-      self[key] ||= AngryHash.new
+      self[key] = AngryHash.new if !self.key?(key)
+      self[key]
 
     else
       self[method_s]
