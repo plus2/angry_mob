@@ -8,7 +8,11 @@ class AngryMob
     autoload :Notify  , "angry_mob/target/notify"
     autoload :Flow    , "angry_mob/target/flow"
 
+    # Ok lets define some class level goodies.
     class << self
+
+      #### DSL for creating actions
+
       # TODO = build NotImplemented raising stubs
       def known_actions *actions
         @known_actions = actions.flatten
@@ -34,7 +38,7 @@ class AngryMob
       end
 
 
-      # building calls to this target
+      #### building calls to this target
 
       # does this action has comprise only actions?
       def actions_only?(args)
@@ -51,42 +55,46 @@ class AngryMob
         args
       end
 
-      # extension point: extracts the default_object from the args
+      # Extracts the default_object from the args.
+      # This could be overridden by subclasses.
       def extract_default_object(arg_list, arg_hash)
         unless arg_list.empty?
           (arg_list.size > 1 ? arg_list : arg_list.first)
         end
       end
 
-      # extension point: makes a unique key for this instance
+      # Based on the args, makes a unique key for a target instance.
+      # This could be overridden by subclasses.
       def instance_key(args)
         "#{nickname}:#{args.default_object.to_s}"
       end
 
-      # build a call proxy for the named target
-      #
-      # interpret arguments
-      # builds or retrieves an object instance
-      # checks arguments - raises if semantics are violated
-      # yields new target
-      # builds a TargetCall
+      # Build a call-proxy for the named target.
       def build_call(mob, *new_args, &blk)
         args = extract_args(*new_args)
 
         instance_key = instance_key(args)
-        target       = yield(instance_key, nil) # fetch an existing instance
 
+        # fetch an existing instance, if there is one
+        target       = yield(instance_key, nil)
+
+        # Ensure that this build isn't going to add any extra args.
+        # Actions are ok.
+        # TODO - check that old-args == new-args, so that we can add another call-site if we want
         if target && !actions_only?(args)
           raise TargetError, "you can't re-configure a target nickname=#{nickname} args=#{args.inspect[0..100]}"
         end
 
+        # Create the instance if necessary.
         if target.nil?
           target = new(args,&blk)
-          yield instance_key, target # set a new instance
+          yield instance_key, target
         end
 
+        # Set the target's mob.
         target.mob = mob
 
+        # Build the call-proxy for this definition site.
         target.build_call(args)
       end
 
@@ -114,7 +122,7 @@ class AngryMob
 
 
 
-    # call generation
+    #### Call generation
 
     def normalise_actions(actions)
       actions = [ actions ].flatten.compact.map {|a| a.to_sym}.uniq.reject {|a| a.blank?}
@@ -156,6 +164,7 @@ class AngryMob
       noticing_changes(mob,ctx) { action_names.each {|action| send(action)} }
     end
 
+    # Takes a target nickname and a set of normal target args, creates enough context and calls the target.
     def call_target(nickname, *args)
       call = mob.target(nickname,*args)
       call.act = ctx.act
@@ -163,9 +172,33 @@ class AngryMob
     end
 
 
-    # runtime
 
-    # runtime validation
+    #### Definition-time helpers
+    def merge_defaults(attrs)
+      @args.reverse_deep_merge!(attrs)
+    end
+
+    def guards
+      @guards ||= []
+    end
+
+    # Adds an if? guard
+    def if?(label='if?{}',&block)
+      guards << [label,block]
+      self
+    end
+
+    # Adds an unless? guard
+    def unless?(label='unless?{}',&block)
+      guards << [label, lambda { not yield }]
+      self
+    end
+
+
+
+    #### Runtime
+
+    # Do some very basic runtime validation. This validation is bound very late!
     def do_validation!
       validate!
       unless @problems.blank?
@@ -174,22 +207,25 @@ class AngryMob
       end
     end
 
-    # default validation
+    # Targets should override this (possibly calling super) to do their own validation.
     def validate!
       problem!("The default object wasn't set") if default_object.blank?
     end
 
+    # Flag a validation problem.
     def problem!(problem)
       @problems ||= []
       @problems << problem
     end
 
+
+    # Calculate and cache the state before any actions have been performed.
     def before_state
       @before_state ||= state
     end
 
 
-    # executes actions with all the trimmings
+    # Executes actions with full context and all the trimmings.
     def noticing_changes(mob, ctx, &blk)
       log
       log "+#{'-' * 20}"
@@ -204,6 +240,7 @@ class AngryMob
       before_call if respond_to?(:before_call)
 
 
+      # Give each registered guard a chance to stop processing.
       for label,guard in guards
         unless guard.call
           log "stopped by guard: #{label}"
@@ -212,17 +249,22 @@ class AngryMob
         end
       end
 
+
       before_state
       debug "before_state=#{before_state.inspect}"
 
+
+      # Here's the core of the target:
       if node.dry_run?
         log "DRY RUN: skipping action"
       else
+        # riiight here:
         yield
       end
 
       debug "after_state=#{state.inspect}"
 
+      # If the state's changed, let it be known
       if changed?
         changed 
         notify
@@ -252,13 +294,13 @@ class AngryMob
       Notify.new(mob)
     end
 
-    # delegates notification to the target scheduler
+    # Very simply delegates notification to the target scheduler
     def notify
       mob.scheduler.notify( args.notify ) if args.notify
     end
 
-    # called when state changes after actions are called
-    # default implementation is a no-op
+    # Give the target itself a neat place to react to changes.
+    # Default implementation is a no-op.
     def changed
       log "target changed"
       # no-op
@@ -269,8 +311,8 @@ class AngryMob
       before_state != state
     end
 
-    # returns the state of the target
-    # default implementation is a random number (i.e. it always changes)
+    # Returns the state of the target.
+    # Default implementation is a random number (i.e. it always changes)
     def state
       {
         :rand => rand
@@ -294,29 +336,9 @@ class AngryMob
       end
     end
 
-    # delegates to the resource locator
+    # delegates to the node's resource locator
     def resource(name)
       node.resource_locator[self,name]
-    end
-
-    def merge_defaults(attrs)
-      @args.reverse_deep_merge!(attrs)
-    end
-
-    def guards
-      @guards ||= []
-    end
-
-    # adds an if? guard
-    def if?(label='if?{}',&block)
-      guards << [label,block]
-      self
-    end
-
-    # adds an unless? guard
-    def unless?(label='unless?{}',&block)
-      guards << [label, lambda { not yield }]
-      self
     end
 
 

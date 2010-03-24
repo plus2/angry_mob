@@ -1,6 +1,7 @@
 class AngryMob
   class Builder
 
+    # A `Builder::Act` groups target calls.
     class Act
       include Log
 
@@ -11,6 +12,7 @@ class AngryMob
         @blk = blk
       end
 
+      # Binds the act to the mob and the file from which it came.
       def bind(mob,file)
         @mob  = mob
         @file = file
@@ -18,10 +20,37 @@ class AngryMob
         mob.acts[@name] = self
       end
 
-      #reveal :instance_eval
+      #### Compilation
+
+      # Turn target definitions into `TargetCalls` recorded in the `TargetScheduler`
       def compile!
         instance_eval &@blk
       end
+
+      # bundler + rubygems clusterfuck
+      def gem(*args,&blk)
+        __compile_target(:gem,*args,&blk)
+      end
+
+      def method_missing(nickname,*args,&blk)
+        __compile_target(nickname,*args,&blk)
+      end
+
+      # Schedules a target, adding call-location context along the way.
+      def __compile_target(nickname,*args,&blk)
+        target = mob.scheduler.schedule_target(nickname, *args, &blk)
+
+        # record call location information
+        target.set_caller(caller(2).first) if target.respond_to?(:set_caller)
+        target.act  = @name
+        target.file = @file
+
+        target.merge_defaults(defaults.defaults_for(nickname)) if target.respond_to?(:merge_defaults)
+
+        target
+      end
+
+      #### Definition helpers
 
       def defaults
         @defaults ||= Target::Defaults.new
@@ -50,27 +79,6 @@ class AngryMob
         mob.act_scheduler.schedule_act(act_name)
       end
 
-      # bundler + rubygems clusterfuck
-      def gem(*args,&blk)
-        __compile_target(:gem,*args,&blk)
-      end
-
-      def method_missing(nickname,*args,&blk)
-        __compile_target(nickname,*args,&blk)
-      end
-
-      def __compile_target(nickname,*args,&blk)
-        target = mob.scheduler.schedule_target(nickname, *args, &blk)
-
-        # record call location information
-        target.set_caller(caller(2).first) if target.respond_to?(:set_caller)
-        target.act  = @name
-        target.file = @file
-
-        target.merge_defaults(defaults.defaults_for(nickname)) if target.respond_to?(:merge_defaults)
-
-        target
-      end
     end
   end
 end

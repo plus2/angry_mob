@@ -1,15 +1,21 @@
 class AngryMob
+  # The `TargetScheduler` is how the targets are actually run.
+  # This includes targets, delayed targets and notifications.
+
 	class TargetScheduler < Struct.new(:mob)
 		include Log
 
+    # The list of primary targets.
     def targets
       @targets ||= []
     end
 
+    # The list of delayed targets.
     def delayed_targets
       @delayed_targets ||= []
     end
 
+    # Iterates through the targets, then the delayed targets.
     def run!
       @running_targets = targets.reverse
       
@@ -31,6 +37,7 @@ class AngryMob
       delayed_targets.each {|t| t.call(mob)}
     end
 
+    # Resolve delayed targets to TargetCalls, as they can be recorded in various ways.
 		def process_delayed_targets
 			delayed_targets.map! do |target|
 				case target
@@ -44,7 +51,7 @@ class AngryMob
       # TODO - squeeze repeated targets
 		end
 
-    # handles a notification, by either placing it on the queue or calling it now
+    # Handles a notification, by either placing it on the queue or calling it now
     def notify(notification)
       if AngryMob::Target::Notify === notification
         if notification.later?

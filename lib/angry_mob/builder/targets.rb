@@ -1,5 +1,6 @@
 class AngryMob
   class Builder
+    # `Builder::Targets` provides the interface for defining `Target` subclasses.
     class Targets
       def initialize(name,options={},&blk)
         @dependencies = options[:requires] || []
@@ -12,6 +13,8 @@ class AngryMob
         instance_eval(&@blk)
         self
       end
+
+      #### Definition helpers.
 
       def TargetHelpers(&blk)
         @helpers ||= Module.new
@@ -26,6 +29,7 @@ class AngryMob
         add_class(nickname,Target,&blk)
       end
       
+      # subclass an existing target by name.
       def method_missing(method,*args,&blk)
         if args.size == 1
           add_class(args.first, @mob.target_classes[method], &blk)
