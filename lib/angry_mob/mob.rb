@@ -31,9 +31,11 @@ class AngryMob
     # bind selected targets to the node
     def compile!
       log "setting up node"
-      setup_node[node] if setup_node
+      defaults = AngryHash.new
 
-      node.consolidate!
+      setup_node[node,defaults]       if setup_node
+      node_defaults[node,defaults]    if node_defaults
+      consolidate_node[node,defaults] if consolidate_node
 
       log "compiling"
       act_scheduler.each_act do |act_name|
@@ -76,7 +78,7 @@ class AngryMob
     # builder populates the following with definition blocks
 
     # node defaults
-    attr_accessor :setup_node
+    attr_accessor :setup_node, :consolidate_node, :node_defaults
 
     # acts
     def acts

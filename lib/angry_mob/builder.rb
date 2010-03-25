@@ -2,6 +2,7 @@ require 'pathname'
 require 'tsort'
 
 class AngryMob
+  # `TargetList` is a hash for topologically sorting target blocks. Thus it provides simple dependency handling.
   class TargetList < Hash
     include TSort
 
@@ -34,7 +35,7 @@ class AngryMob
       new.from_file(path)
     end
 
-    attr_reader :file
+    attr_reader :file, :node_consolidation_block
 
     # read and evaluate a file in builder context
     def from_file(path)
@@ -44,20 +45,21 @@ class AngryMob
       self
     end
 
-    def act(name, &blk)
-      acts[name.to_sym] = [blk,@file.dup]
-    end
-
-    def targets(name,opts={},&blk)
-      target_blocks.add_block(name,blk,opts[:requires])
-    end
-
     def to_mob
       mob = Mob.new
 
-      mob.setup_node = lambda {|node|
-        node_setup_blocks.each {|blk| blk[node]}
+      # pre-setup
+      mob.setup_node = lambda {|node,defaults|
+        node_setup_blocks.each {|blk| blk[node,defaults]}
       }
+
+      # in-setup
+      mob.node_defaults = lambda {|node,defaults|
+        node_default_blocks.each {|blk| blk[node,defaults]}
+      }
+
+      # post-setup
+      mob.consolidate_node = @node_consolidation_block
 
       target_blocks.each_target do |name,blk|
         Targets.new(name,&blk).bind(mob)
@@ -70,13 +72,39 @@ class AngryMob
       mob
     end
 
+    #### DSL API
+
+    # Defines an `act` block
+    def act(name, &blk)
+      acts[name.to_sym] = [blk,@file.dup]
+    end
+
+    # Defines a `targets` block
+    def targets(name,opts={},&blk)
+      target_blocks.add_block(name,blk,opts[:requires])
+    end
+
+    # A `setup_node` block allows the mob to set defaults, load resource locators and anything else you like.
+    def setup_node(&blk)
+      node_setup_blocks << blk
+    end
+
+    def consolidate_node(&blk)
+      @node_consolidation_block = blk
+    end
+
+    # Defaults
+    def node_defaults(&blk)
+      node_default_blocks << blk
+    end
+
+
     protected
     def node_setup_blocks
       @node_setup_blocks ||= []
     end
-
-    def setup_node(&blk)
-      node_setup_blocks << blk
+    def node_default_blocks
+      @node_default_blocks ||= []
     end
 
     def acts
