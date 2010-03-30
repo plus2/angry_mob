@@ -38,6 +38,7 @@ class AngryMob
     end
 
     # Resolve delayed targets to TargetCalls, as they can be recorded in various ways.
+    # TODO - every target call-like should have a .to_target_call, for quacking
 		def process_delayed_targets
 			delayed_targets.map! do |target|
 				case target
@@ -65,7 +66,7 @@ class AngryMob
     end
 
     def schedule_target(nickname,*args,&blk)
-      targets << target = mob.target(nickname,*args,&blk)
+      targets << target = mob.target_registry.target(nickname,*args,&blk)
       target
     end
 

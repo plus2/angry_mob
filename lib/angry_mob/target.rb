@@ -4,6 +4,7 @@ class AngryMob
     include Log
 
     autoload :Call    , 'angry_mob/target/call'
+    autoload :Registry, 'angry_mob/target/registry'
     autoload :Defaults, "angry_mob/target/defaults"
     autoload :Notify  , "angry_mob/target/notify"
     autoload :Flow    , "angry_mob/target/flow"
@@ -169,6 +170,17 @@ class AngryMob
       call = mob.target(nickname,*args)
       call.act = ctx.act
       call.call(mob)
+    end
+
+    def schedule_target(nickname,*args,&blk)
+      target = mob.scheduler.schedule_target(nickname, *args, &blk)
+
+      # record call location information
+      target.set_caller(caller(2).first) if target.respond_to?(:set_caller)
+      target.act  = ctx.act.name
+      target.file = ctx.act.definition_file
+
+      target
     end
 
 

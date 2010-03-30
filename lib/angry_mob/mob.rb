@@ -3,10 +3,10 @@ class AngryMob
   class Mob
     include Log
 
-    attr_reader :node, :scheduler, :act_scheduler
+    attr_reader :node, :scheduler, :act_scheduler, :target_registry
 
     def initialize
-      add_builtin_targets
+      @target_registry = Target::Registry.new(self)
     end
 
     def riot!(nodename, attributes)
@@ -26,6 +26,8 @@ class AngryMob
       log "beaten in #{Time.now-start}s"
       log
       log "#{nodename} has been beaten by an AngryMob. Have a nice day!"
+
+      @target_registry.clear_instances!
     end
 
     # bind selected targets to the node
@@ -83,42 +85,6 @@ class AngryMob
     # acts
     def acts
       @acts ||= Dictionary.new
-    end
-
-    # target classes
-    def target_classes
-      # TODO - guard against adding 2x
-      @target_classes ||= Dictionary.new
-    end
-
-    def target_instances
-      @target_instances ||= {}
-    end
-
-    def generators
-      @generators ||= {}
-    end
-
-    def add_builtin_targets
-    end
-
-    def target(nickname, *args, &block)
-      if g = generators[nickname]
-        return g[ [ args, block ].flatten.compact ]
-      end
-
-      raise(MobError, "no target nicknamed '#{nickname}' found\n#{target_classes.keys.inspect}") unless target_classes.key?(nickname)
-      klass = target_classes[nickname]
-
-      args.options[:default_block] = block if block_given?
-
-      klass.build_call(self,*args) {|key,instance|
-        if instance.nil?
-          target_instances[key]
-        else
-          target_instances[key] = instance
-        end
-      }
     end
     
   end

@@ -5,7 +5,7 @@ class AngryMob
     class Act
       include Log
 
-      attr_reader :mob
+      attr_reader :mob, :name, :definition_file
 
       def initialize(name,&blk)
         @name = name
@@ -15,7 +15,7 @@ class AngryMob
       # Binds the act to the mob and the file from which it came.
       def bind(mob,file)
         @mob  = mob
-        @file = file
+        @definition_file = file
 
         mob.acts[@name] = self
       end
@@ -43,7 +43,7 @@ class AngryMob
         # record call location information
         target.set_caller(caller(2).first) if target.respond_to?(:set_caller)
         target.act  = @name
-        target.file = @file
+        target.file = @definition_file
 
         target.merge_defaults(defaults.defaults_for(nickname)) if target.respond_to?(:merge_defaults)
 

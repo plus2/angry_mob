@@ -32,7 +32,7 @@ class AngryMob
       # subclass an existing target by name.
       def method_missing(method,*args,&blk)
         if args.size == 1
-          add_class(args.first, @mob.target_classes[method], &blk)
+          add_class(args.first, @mob.target_registry[method], &blk)
         else
           super
         end
@@ -41,7 +41,7 @@ class AngryMob
       protected
       def add_class(nickname,superclass,&blk)
         # TODO disallow duplicate definition
-        klass = @mob.target_classes[nickname.to_sym] = Class.new(superclass, &blk)
+        klass = @mob.target_registry[nickname.to_sym] = Class.new(superclass, &blk)
         h = @helpers
 
         klass.module_eval {
