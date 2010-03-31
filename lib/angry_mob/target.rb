@@ -144,12 +144,9 @@ class AngryMob
     end
 
     def finalise_call!
-
       if @actions_called.blank? && da = self.class.default_action
         send(da)
       end
-
-      @act = nil
     end
 
     # nothing actions are no-ops but by being called, prevent the default action being called
@@ -254,7 +251,7 @@ class AngryMob
       debug "after_state=#{state.inspect}"
 
       # If the state's changed, let it be known
-      if changed?
+      if state_changed?
         changed 
         notify
       else
@@ -294,8 +291,17 @@ class AngryMob
     end
 
     # has the state changed?
-    def changed?
+    def state_changed?
       before_state != state
+    end
+
+    # Has the state changed? and call finalise_call!
+    # We use this to ensure that the target is called before testing whether to flow on to a subsequent target:
+    #
+    #   dir("/tmp/config").changed? && sh("echo it changed")
+    def changed?
+      finalise_call!
+      state_changed?
     end
 
     # Returns the state of the target.
