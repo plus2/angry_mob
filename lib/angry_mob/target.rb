@@ -3,11 +3,9 @@ class AngryMob
   class Target
     include Log
 
-    autoload :Call    , 'angry_mob/target/call'
     autoload :Registry, 'angry_mob/target/registry'
     autoload :Defaults, "angry_mob/target/defaults"
     autoload :Notify  , "angry_mob/target/notify"
-    autoload :Flow    , "angry_mob/target/flow"
 
     # Ok lets define some class level goodies.
     class << self
@@ -35,15 +33,22 @@ class AngryMob
       def action(name, &blk)
         raise(TargetError, "action already exists for #{self}") if actions.key?(name)
         actions[name] = true
-        define_method(name, &blk)
+
+        method_name = "__action_#{name}"
+
+        define_method(method_name, &blk)
+        define_method(name) do |*args|
+          noticing_changes { send(method_name) }
+        end
       end
+
 
 
       #### building calls to this target
 
       # does this action has comprise only actions?
       def actions_only?(args)
-        (args.keys - [:action,:actions,'action','actions']).empty?
+        (args.keys - [:action,:actions,'action','actions','default_object']).empty?
       end
 
       def extract_args(*new_args)
@@ -71,7 +76,7 @@ class AngryMob
       end
 
       # Build a call-proxy for the named target.
-      def build_call(mob, *new_args, &blk)
+      def build_instance(mob, *new_args, &blk)
         args = extract_args(*new_args)
 
         instance_key = instance_key(args)
@@ -79,12 +84,23 @@ class AngryMob
         # fetch an existing instance, if there is one
         target       = yield(instance_key, nil)
 
+        @definition_sites ||= Hash.new {|h,k| h[k] = []}
+
         # Ensure that this build isn't going to add any extra args.
         # Actions are ok.
         # TODO - check that old-args == new-args, so that we can add another call-site if we want
         if target && !actions_only?(args)
-          raise TargetError, "you can't re-configure a target nickname=#{nickname} args=#{args.inspect[0..100]}"
+
+          @definition_sites[instance_key].each do |callstack|
+            puts
+            puts "previous calls:"
+            callstack.tapp
+          end
+
+          raise TargetError, "you can't re-configure a target #{target.to_s} keys=#{args.keys.inspect} args=#{args.inspect[0..100]}"
         end
+
+        @definition_sites[instance_key] << caller
 
         # Create the instance if necessary.
         if target.nil?
@@ -92,11 +108,8 @@ class AngryMob
           yield instance_key, target
         end
 
-        # Set the target's mob.
-        target.mob = mob
-
         # Build the call-proxy for this definition site.
-        target.build_call(args)
+        target
       end
 
 
@@ -114,75 +127,39 @@ class AngryMob
       self.class.nickname
     end
 
-    attr_reader :ctx, :args
-    attr_accessor :mob
+    attr_reader :args
+    attr_accessor :act
+
+    def mob; act.mob end
 
     def initialize(args)
       @args = args
     end
 
-
-
     #### Call generation
 
-    def normalise_actions(actions)
-      actions = [ actions ].flatten.compact.map {|a| a.to_sym}.uniq.reject {|a| a.blank?}
-
-      if actions.empty? && self.class.default_action
-        actions << self.class.default_action.to_s
-      end
-
-      if actions.include? :nothing
-        [:nothing]
-      else
-        actions
-      end
+    def setup_for_call!(act)
+      @act = act
+      @actions_called = []
     end
 
-    def build_call(args)
-      action_names = normalise_actions(args.delete_all_of(:action,:actions))
-      Target::Call.new(self, action_names)
-    end
+    def finalise_call!
 
-    def call(mob,ctx=nil)
-      if ctx
-        action_names = [ ctx.action_names ]
-      else
-        action_names = []
+      if @actions_called.blank? && da = self.class.default_action
+        send(da)
       end
 
-      action_names = normalise_actions(action_names)
-
-      if action_names.include?(:nothing)
-        log "not running (no actions requested)"
-        return
-      end
-
-      action_names.each do |action|
-        raise(TargetError, "No '#{action}' action found") unless respond_to?(action)
-      end
-
-      noticing_changes(mob,ctx) { action_names.each {|action| send(action)} }
+      @act = nil
     end
 
-    # Takes a target nickname and a set of normal target args, creates enough context and calls the target.
-    def call_target(nickname, *args)
-      call = mob.target(nickname,*args)
-      call.act = ctx.act
-      call.call(mob)
+    # nothing actions are no-ops but by being called, prevent the default action being called
+    def nothing(*)
+      false
     end
 
-    def schedule_target(nickname,*args,&blk)
-      target = mob.scheduler.schedule_target(nickname, *args, &blk)
-
-      # record call location information
-      target.set_caller(caller(2).first) if target.respond_to?(:set_caller)
-      target.act  = ctx.act.name
-      target.file = ctx.act.definition_file
-
-      target
+    def __action_nothing(*)
+      false
     end
-
 
 
     #### Definition-time helpers
@@ -236,16 +213,16 @@ class AngryMob
       @before_state ||= state
     end
 
+    def to_s
+      "#{nickname}(#{default_object})"
+    end
 
     # Executes actions with full context and all the trimmings.
-    def noticing_changes(mob, ctx, &blk)
+    def noticing_changes(&blk)
       log
       log "+#{'-' * 20}"
-      log "  #{nickname}(#{default_object})"
+      log "  #{to_s}"
       log
-
-      @mob = mob
-      @ctx = ctx
 
       do_validation!
 
@@ -286,9 +263,7 @@ class AngryMob
 
       log_end
       
-    ensure
-      @mob = nil
-      @ctx  = nil
+      self
     end
 
     def log_end
@@ -299,11 +274,11 @@ class AngryMob
     end
 
     def node
-      @mob.node
+      mob.node
     end
 
     def mk_notify
-      Notify.new(mob)
+      Notify.new(act)
     end
 
     # Very simply delegates notification to the target scheduler

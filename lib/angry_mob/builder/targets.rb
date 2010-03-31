@@ -30,6 +30,7 @@ class AngryMob
       end
       
       # subclass an existing target by name.
+      # TODO - de-mm
       def method_missing(method,*args,&blk)
         if args.size == 1
           add_class(args.first, @mob.target_registry[method], &blk)

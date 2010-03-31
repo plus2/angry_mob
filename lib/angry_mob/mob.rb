@@ -7,6 +7,7 @@ class AngryMob
 
     def initialize
       @target_registry = Target::Registry.new(self)
+      @act_scheduler = ActScheduler.new
     end
 
     def riot!(nodename, attributes)
@@ -15,11 +16,11 @@ class AngryMob
       log "An AngryMob is rioting on #{nodename}."
       log
 
-      @node          = Node.new(nodename, attributes)
-      @scheduler     = TargetScheduler.new(self)
-      @act_scheduler = ActScheduler.new(node)
+      @node               = Node.new(nodename, attributes)
+      @act_scheduler.node = @node
+      @scheduler          = TargetScheduler.new(self)
 
-      compile!
+      setup!
       run!
 
       log
@@ -28,10 +29,11 @@ class AngryMob
       log "#{nodename} has been beaten by an AngryMob. Have a nice day!"
 
       @target_registry.clear_instances!
+      @act_scheduler.reset!
     end
 
     # bind selected targets to the node
-    def compile!
+    def setup!
       log "setting up node"
       defaults = AngryHash.new
 
@@ -39,42 +41,16 @@ class AngryMob
       node_defaults[node,defaults]    if node_defaults
       consolidate_node[node,defaults] if consolidate_node
 
-      log "compiling"
-      act_scheduler.each_act do |act_name|
-        compile_act(act_name)
-      end
-
-      log "compilation complete"
+      log "setup complete"
       
       self
     end
 
-    def compiled_acts
-      @compiled_acts ||= {}
-    end
-
-    def compile_act(act_name)
-      act_name = act_name.to_sym
-
-      if compiled_acts[act_name]
-        log "   (already compiled #{act_name})"
-        return
-      end
-
-      compiled_acts[act_name] = true
-
-      log " - #{act_name}"
-
-      act = acts[act_name] || raise(MobError, "act '#{act_name}' doesn't exist")
-
-      act.compile!
-    end
-
-    # runs targets bound to the node by compile!
+    # runs acts and then delayed targets
     def run!
+      act_scheduler.run!
       scheduler.run!
     end
-
 
     # building
     # builder populates the following with definition blocks

@@ -14,17 +14,17 @@ class AngryMob
       end
 
       def []=(nickname,target_class)
-        target_classes[nickname.to_s] = target_class
+        target_classes[nickname] = target_class
       end
       def [](nickname)
-        target_classes[nickname.to_s]
+        target_classes[nickname]
       end
 
       def pose_as(nickname,nickname_to_pose_as)
         nickname = nickname.to_s
         nickname_to_pose_as = nickname_to_pose_as.to_s
 
-        posing_class = target_classes.tapp[nickname] || raise(TargetError, "posing class '#{nickname}' doesn't exist!")
+        posing_class = target_classes[nickname] || raise(TargetError, "posing class '#{nickname}' doesn't exist!")
         old_class = target_classes[nickname_to_pose_as]
 
         target_classes[nickname_to_pose_as] = posing_class
@@ -52,7 +52,7 @@ class AngryMob
 
         args.options[:default_block] = block if block_given?
 
-        klass.build_call(mob,*args) {|key,instance|
+        klass.build_instance(mob,*args) {|key,instance|
           key = key.to_s
           if instance.nil?
             target_instances[key]

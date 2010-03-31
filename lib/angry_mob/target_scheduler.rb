@@ -5,11 +5,6 @@ class AngryMob
 	class TargetScheduler < Struct.new(:mob)
 		include Log
 
-    # The list of primary targets.
-    def targets
-      @targets ||= []
-    end
-
     # The list of delayed targets.
     def delayed_targets
       @delayed_targets ||= []
@@ -17,24 +12,20 @@ class AngryMob
 
     # Iterates through the targets, then the delayed targets.
     def run!
-      @running_targets = targets.reverse
+      running_targets = delayed_targets.reverse
       
-      log "running #{@running_targets.size} targets"
+      log "running #{running_targets.size} delayed targets"
 
-      while target = @running_targets.pop
-
-        begin
-          target.call(mob)
-        rescue Object
-          log "error [#{$!.class}] #{$!}\ncalling #{target.inspect}"
-          raise $!
+      #AngryMob::Builder::Act.synthesise(mob,'delayed_targets') do
+        while target = running_targets.pop
+          begin
+            target.call(mob)
+          rescue Object
+            log "error [#{$!.class}] #{$!}\ncalling #{target.inspect[0..200]}"
+            raise $!
+          end
         end
-      end
-
-			process_delayed_targets
-
-      log "running #{delayed_targets.size} delayed targets"
-      delayed_targets.each {|t| t.call(mob)}
+      #end
     end
 
     # Resolve delayed targets to TargetCalls, as they can be recorded in various ways.
@@ -53,21 +44,17 @@ class AngryMob
 		end
 
     # Handles a notification, by either placing it on the queue or calling it now
+    # TODO this needs a-fixin'
     def notify(notification)
       if AngryMob::Target::Notify === notification
         if notification.later?
-          delayed_targets << notification.target_call
+          delayed_targets << notification
         else
-          notification.target_call.call(mob)
+          notification.call
         end
       elsif Proc === notification
         notification[mob]
       end
-    end
-
-    def schedule_target(nickname,*args,&blk)
-      targets << target = mob.target_registry.target(nickname,*args,&blk)
-      target
     end
 
     def schedule_delayed_call(call)
