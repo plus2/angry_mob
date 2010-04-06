@@ -38,6 +38,7 @@ class AngryMob
 
         define_method(method_name, &blk)
         define_method(name) do |*args|
+          @actions_called << method_name
           noticing_changes { send(method_name) }
         end
       end
@@ -144,6 +145,7 @@ class AngryMob
     end
 
     def finalise_call!
+      puts "finalise_call... actions=#{@actions_called.inspect} da=#{self.class.default_action}"
       if @actions_called.blank? && da = self.class.default_action
         send(da)
       end
@@ -300,6 +302,7 @@ class AngryMob
     #
     #   dir("/tmp/config").changed? && sh("echo it changed")
     def changed?
+      puts "finalising"
       finalise_call!
       state_changed?
     end
