@@ -1,4 +1,4 @@
-# This is AngryMob (AM)
+# This is AngryMob
 AngryMob (AM) is the automated system configuration component of [YesMaster](http://yesmasterapp.com).
 
 It combines:
