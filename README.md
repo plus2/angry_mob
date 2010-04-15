@@ -1,11 +1,13 @@
 AngryMob (AM) is the automated system configuration component of [YesMaster](http://yesmasterapp.com).
 
 It combines:
+
 * convenient configuration data (`the node`)
 * idempotent code to ensure the configuration of the parts of a system (`targets`)
 * and a method of controlling the flow of the setup (`acts`)
 
 AngryMob values having:
+
 * zero external dependencies.
 * a small, simple core.
 * Rubiness.
@@ -31,6 +33,7 @@ AngryMob is young and fluid, but I'm using it a lot in the maintainence of VPSes
 In particular, AM lacks any unit-level specs or tests so far. The servers it maintains are valid functional testing in my eyes ;)
 
 ### Taxonomy
+
 * The `node` is a glob of data representing the thing you're configuring.
 * `targets` are things you want to configure.
 * `acts` are groups of target invocations. They can also schedule the execution of other acts.
@@ -63,6 +66,7 @@ Mobs are groups of target definitions and acts. They can be mixed and matched.
 http://github.com/plus2/common_mob
 
 A small toolkit of handy targets:
+
 * dir
 * file
 * template - ERB
