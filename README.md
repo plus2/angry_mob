@@ -1,3 +1,4 @@
+# This is AngryMob (AM)
 AngryMob (AM) is the automated system configuration component of [YesMaster](http://yesmasterapp.com).
 
 It combines:
@@ -91,7 +92,7 @@ A small toolkit of handy targets:
 
 AngryMob was written by [Lachie Cox](http://github.com/lachie) for [PLUS2](http://plus2.com.au) and [YesMaster](http://yesmasterapp.com).
 
-It lives at http://github.com/plus2/angry_mob.
+It lives at [http://github.com/plus2/angry_mob](http://github.com/plus2/angry_mob).
 
 Please try it out and send us feedback via the github page.
 
