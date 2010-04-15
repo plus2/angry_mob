@@ -12,23 +12,23 @@ AngryMob values having:
 * a small, simple core.
 * Rubiness.
 
-Having *zero external dependencies* means that AM can be used from the very moment that a bare ruby interpreter is installed on a server.
+Having *zero external dependencies* means that AM can be used from the very moment a bare ruby interpreter is installed on a server.
 
-A *small, simple core* means that debugging and testing the code is easy. It also allows AM to be embedded directly into other projects.
+A *small, simple core* means that debugging and testing the code is simplified. It also allows AM to be embedded directly into other projects.
 
-Please note that **AngryMob is a reaction to Chef**. Despite this, I really respect the Chef movement and the guys who've built it.
+Please note that **AngryMob is a reaction to Chef**. Despite this, I retain the utmost respect the Chef movement and the guys who've built it.
 
 AM purposely omits or eschews the following features you might be familiar with from Chef:
 
-* The client and server and its dependencies. AM operates similarly to "chef-solo" or is combined with other components for network based "chef-client"-like operation.
-* A built in, fixed cookbook layout and metadata, and. You can define your own ResourceLocator, or use the basic supplied one.
-* A single copy nirvana implementation. Again, define it yourself if you want it.
-* The puppet resource/provider separation. I don't have a particular solution to supporting multiple operating systems, but its strongly YAGNI for now.
-* Exhaustive system discovery like Ohai. I think Ohai is great, but running it before every AM run to find the hostname and IP is excessive.
-* Type-checking of data. This is ruby, where ducks rule the roost.
+* **The client and server and its dependencies.** AM operates similarly to "chef-solo" or is combined with other components for network based "chef-client"-like operation.
+* **A built in, fixed cookbook layout and metadata.** You can define your own ResourceLocator, or use the basic supplied one.
+* **A single copy nirvana implementation.** Again, define it yourself if you want it.
+* **The puppet resource/provider separation.** I don't have a particular solution to supporting multiple operating systems, but its strongly YAGNI for now.
+* **Exhaustive system discovery like Ohai.** I think Ohai is great, but running it before every AM run to find the hostname and IP is excessive.
+* **Type-checking of data.** This is ruby, where ducks rule the roost.
 
 ### Status
-AngryMob is young and fluid, but I'm using it a lot in the maintainence of VPSes at plus2.
+AngryMob is young and fluid, but I'm using it a lot in the maintainence of VPSes at PLUS2.
 
 In particular, AM lacks any unit-level specs or tests so far. The servers it maintains are valid functional testing in my eyes ;)
 
@@ -89,7 +89,7 @@ A small toolkit of handy targets:
 
 ## Meta
 
-AngryMob was written by [Lachie Cox](http://github.com/lachie) for [Plus2](http://plus2.com.au) and [YesMaster](http://yesmasterapp.com).
+AngryMob was written by [Lachie Cox](http://github.com/lachie) for [PLUS2](http://plus2.com.au) and [YesMaster](http://yesmasterapp.com).
 
 It lives at http://github.com/plus2/angry_mob.
 
@@ -97,7 +97,7 @@ Please try it out and send us feedback via the github page.
 
 ## License
 
-Copyright (c) 2010 Plus2
+Copyright (c) 2010 PLUS2
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
