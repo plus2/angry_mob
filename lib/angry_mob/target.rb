@@ -47,11 +47,6 @@ class AngryMob
 
       #### building calls to this target
 
-      # does this action has comprise only actions?
-      def actions_only?(args)
-        (args.keys - [:action,:actions,'action','actions','default_object']).empty?
-      end
-
       def extract_args(*new_args)
         args = AngryHash[new_args.extract_options!]
 
@@ -73,35 +68,16 @@ class AngryMob
       # Based on the args, makes a unique key for a target instance.
       # This could be overridden by subclasses.
       def instance_key(args)
-        "#{nickname}:#{args.default_object.to_s}"
+        args.key
       end
 
       # Build a call-proxy for the named target.
       def build_instance(mob, *new_args, &blk)
         args = extract_args(*new_args)
-
         instance_key = instance_key(args)
 
         # fetch an existing instance, if there is one
         target       = yield(instance_key, nil)
-
-        @definition_sites ||= Hash.new {|h,k| h[k] = []}
-
-        # Ensure that this build isn't going to add any extra args.
-        # Actions are ok.
-        # TODO - check that old-args == new-args, so that we can add another call-site if we want
-        if target && !actions_only?(args)
-
-          @definition_sites[instance_key].each do |callstack|
-            puts
-            puts "previous calls:"
-            callstack.tapp
-          end
-
-          raise TargetError, "you can't re-configure a target #{target.to_s} keys=#{args.keys.inspect} args=#{args.inspect[0..100]}"
-        end
-
-        @definition_sites[instance_key] << caller
 
         # Create the instance if necessary.
         if target.nil?
@@ -109,7 +85,6 @@ class AngryMob
           yield instance_key, target
         end
 
-        # Build the call-proxy for this definition site.
         target
       end
 

@@ -41,6 +41,11 @@ class AngryMob
       def target_instances
         @target_instances ||= {}
       end
+
+      def unkeyed_instances
+        @unkeyed_instances ||= []
+      end
+
       def key_classes 
         @key_classes ||= Hash.new {|h,k| h[k] = []}
       end
@@ -53,12 +58,20 @@ class AngryMob
         args.options[:default_block] = block if block_given?
 
         klass.build_instance(mob,*args) {|key,instance|
-          key = key.to_s
-          if instance.nil?
-            target_instances[key]
-          else
-            key_classes[klass] << key
-            target_instances[key] = instance
+
+          # If they have no key, just recording instance.
+          if !key && instance
+            unkeyed_instances << instance
+            instance
+            
+          # If there's a key but no instance, fetch an existing instance
+          elsif key && !instance
+            target_instances[key.to_s]
+
+          # If there's both, record the instance under the key.
+          elsif key && instance
+            key_classes[klass] << key.to_s
+            target_instances[key.to_s] = instance
           end
         }
       end
