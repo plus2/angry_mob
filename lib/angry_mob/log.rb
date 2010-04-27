@@ -13,12 +13,16 @@ class AngryMob
 			puts "  %-20s| #{msg * ' '}" % __class_to_s
 		rescue
 			puts "#{self.class.to_s} | #{msg * ' '}"
+    ensure
+      $stdout.flush
 		end
 
 		def debug(*msg)
 			puts "* %-20s| #{msg * ' '}" % __class_to_s
 		rescue
 			puts "Debug #{self.class.to_s} | #{msg * ' '}"
+    ensure
+      $stdout.flush
 		end
 	end
 end
