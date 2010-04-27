@@ -1,4 +1,5 @@
 class AngryHash < Hash
+
   def self.[](other)
     super(__convert(other))
   end
@@ -60,6 +61,29 @@ class AngryHash < Hash
   def to_hash
     self
   end
+
+  def to_normal_hash
+    __to_hash(self)
+  end
+  def __to_hash(value,cycle_guard={})
+    return cycle_guard[value.hash] if cycle_guard.key?(value.hash)
+
+    case value
+    when Hash
+      new_hash = cycle_guard[value.hash] = {}
+
+      value.inject(new_hash) do |hash,(k,v)|
+        hash[k] = __to_hash(v,cycle_guard)
+      hash
+      end
+    when Array
+      new_array = cycle_guard[value.hash] = []
+
+      value.each {|v| new_array << __to_hash(v,cycle_guard)}
+    else
+      value
+    end
+
 
   def method_missing(method,*args,&blk)
     method_s = method.to_s
