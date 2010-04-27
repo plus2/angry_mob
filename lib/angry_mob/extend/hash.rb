@@ -56,3 +56,12 @@ class Hash
     
 
 end
+
+class AngryHash
+    def delete_all_of(*keys)
+      keys.map {|k| delete(k.to_s)}.compact.uniq
+    end
+
+    require 'angry_hash/merge_string'
+    include AngryHash::MergeString
+end
