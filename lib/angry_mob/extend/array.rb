@@ -8,9 +8,9 @@ class Array
 
   def options
     if Hash === last
-      self[-1] = AngryMob::AngryHash.__convert(last)
+      self[-1] = AngryHash.__convert(last)
     else
-      opts = AngryMob::AngryHash.new
+      opts = AngryHash.new
       push opts
       opts
     end

@@ -3,6 +3,14 @@
 require 'pathname'
 @root = Pathname(__FILE__).dirname.parent.expand_path
 
+
+%w{json thor angry_hash}.each do |lib|
+  root = @root+'vendor'+lib
+  $: << (root+'lib')
+end
+
+require 'thor'
+
 $:.unshift @root+'lib'
 require 'angry_mob'
 
@@ -55,20 +63,14 @@ end
 
 ARGV.extend ArgvExtension
 
+
 # TODO - merge in json snippets from the cmdline
-
-def require_json
-  json_root = @root+'vendor/json'
-  $: << (json_root+'lib')
-
-  require 'json/pure'
-end
 
 attributes ||= {}
 
 if json_file = ARGV.json_file
+  require 'json/pure'
   json_file = json_file.pathname.expand_path
-  require_json
   attributes = JSON.parse( json_file.read )
 end
 

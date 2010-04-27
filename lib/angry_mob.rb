@@ -1,11 +1,12 @@
 require 'pathname'
 here = Pathname(__FILE__).dirname
 
+require 'angry_hash'
+
+# XXX duckpunches aren't good for not stepping on other codes' toes
 require 'angry_mob/extend'
 
 class AngryMob
-  autoload :AngryHash    , 'angry_mob/angry_struct'
-
   autoload :Mob            , 'angry_mob/mob'
   autoload :Node           , 'angry_mob/node'
 
