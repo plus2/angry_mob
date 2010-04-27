@@ -83,6 +83,7 @@ class AngryHash < Hash
     else
       value
     end
+  end
 
 
   def method_missing(method,*args,&blk)
