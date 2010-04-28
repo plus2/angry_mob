@@ -99,8 +99,7 @@ class AngryHash < Hash
       !! self[key]
 
     when ?!
-      self[key] = AngryHash.new if !self.key?(key)
-      self[key]
+      self[key] ||= AngryHash.new
 
     else
       self[method_s]
@@ -125,14 +124,14 @@ class AngryHash < Hash
     v = v.to_hash if v.respond_to?(:to_hash)
 
     case v
+    when AngryHash
+      v
     when Hash
       __convert(v)
     when Array
-      v.map {|v| __convert_value(v)}
-    when Fixnum,Symbol,NilClass,TrueClass,FalseClass,Float
-      v
+      v.map {|v| Hash === v ? __convert_value(v) : v}
     else
-      v.dup
+      v
     end
   end
   
