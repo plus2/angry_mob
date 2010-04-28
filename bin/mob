@@ -74,7 +74,7 @@ if json_file = ARGV.json_file
   attributes = JSON.parse( json_file.read )
 end
 
-attributes = AngryMob::AngryHash[attributes]
+attributes = AngryHash[attributes]
 
 nodename = ARGV.nodename || `hostname -s`.chomp
 
