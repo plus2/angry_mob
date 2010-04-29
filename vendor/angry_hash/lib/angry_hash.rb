@@ -21,6 +21,14 @@ class AngryHash < Hash
   end
   alias_method :merge!, :update
 
+  def merge(hash)
+    self.dup.update(hash)
+  end
+
+  def dup
+    self.class[ self ]
+  end
+
   def deep_merge(other_hash)
     self.merge(other_hash) do |key, oldval, newval|
       oldval = AngryHash.__convert_value(oldval)
