@@ -7,6 +7,8 @@ begin
     gemspec.email = "lachie@plus2.com.au"
     gemspec.homepage = "http://github.com/plus2/angry_hash"
     gemspec.authors = ["Lachie Cox"]
+    gemspec.test_files = []
+    gemspec.executables = []
   end
   Jeweler::GemcutterTasks.new
 rescue LoadError
