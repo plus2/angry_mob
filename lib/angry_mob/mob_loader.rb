@@ -2,10 +2,15 @@ class AngryMob
   class MobLoader
     include Log
 
+    attr_reader :builder
+
+    def initialize
+      @builder = Builder.new
+    end
+
     def load(path)
       path = Pathname(path).expand_path
 
-      @builder ||= Builder.new
 
       load_lib(path)
       load_mob(path)

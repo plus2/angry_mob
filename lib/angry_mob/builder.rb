@@ -35,7 +35,15 @@ class AngryMob
       new.from_file(path)
     end
 
-    attr_reader :file, :node_consolidation_block
+    attr_reader :node_consolidation_block
+
+    def file
+      if @file
+        @file
+      else
+        '<no-file>'
+      end
+    end
 
     # read and evaluate a file in builder context
     def from_file(path)
@@ -75,8 +83,9 @@ class AngryMob
     #### DSL API
 
     # Defines an `act` block
-    def act(name, &blk)
-      acts[name.to_sym] = [blk,@file.dup]
+    def act(name, definition_file=nil, &blk)
+      definition_file ||= file
+      acts[name.to_sym] = [blk,definition_file.dup]
     end
 
     # Defines a `targets` block
