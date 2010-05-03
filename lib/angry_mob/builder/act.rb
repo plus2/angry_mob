@@ -12,6 +12,7 @@ class AngryMob
       end
 
       def ui; mob.ui end
+      def log(message); mob.ui.log message end
 
       # Binds the act to the mob and the file from which it came.
       def bind(mob,file)
@@ -72,6 +73,7 @@ class AngryMob
           @current_target.finalise_call!
         end
       end
+      alias_method :finalise!, :__finalise_current_target
 
       def in_sub_act(&blk)
         sub_act = self.class.new("#{name}-sub-act",&blk)

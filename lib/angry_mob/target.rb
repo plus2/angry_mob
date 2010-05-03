@@ -106,6 +106,8 @@ class AngryMob
     def mob; act.mob end
     def ui ; mob.ui  end
 
+    def log(message); mob.ui.log message end
+
     def initialize(args)
       @args = args
     end
