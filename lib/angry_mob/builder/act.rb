@@ -47,7 +47,6 @@ class AngryMob
       # TODO - de-mm
       def method_missing(nickname,*args,&blk)
         return super unless @running
-
         __run_target(nickname,*args,&blk)
       end
 
@@ -55,6 +54,9 @@ class AngryMob
       def __run_target(nickname,*args,&blk)
 
         __finalise_current_target
+
+        puts "act=#{name} nickname=#{nickname} from"
+        caller.grep(/from_file/).tapp
 
         @current_target = target = mob.target_registry.target(nickname,*args,&blk)
 
