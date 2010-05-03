@@ -44,15 +44,16 @@ class AngryMob
     # Set the terminal's background ANSI color to white.
     ON_WHITE   = "\e[47m"
     
-    attr_reader :level, :result, :message
+    attr_reader :level, :result, :message, :stack
 
-    def initialize(min_level=0)
+    def initialize(min_level=0, stack=[])
+      @stack = stack
       @min_level = @level = min_level
       @colour = CLEAR
     end
 
-    def self.stack; @stack ||= [] end
-    def stack; self.class.stack end
+    #def self.stack; @stack ||= [] end
+    #def stack; self.class.stack end
     def current
       stack.last || self
     end
@@ -142,7 +143,7 @@ class AngryMob
 
     def push(message,opts={},&block)
       start! message
-      subui = self.class.new(@level+1)
+      subui = self.class.new(@level+1,stack)
 
       stack.push subui
 
