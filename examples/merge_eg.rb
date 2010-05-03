@@ -1,4 +1,5 @@
 require 'eg_helper'
+require 'yajl'
 
 eg.setup do
   @a = AngryHash[
@@ -95,3 +96,27 @@ eg 'reverse_deep_merge' do
   Assert( merged.b.e == 'e')
 end
 
+eg 'deep regression' do
+  provider = AngryHash[
+    :network => {
+      :public => {
+        :gateway => '69.164.204.1',
+        :netmask => '255.255.255.0'
+      },
+      :private => {
+        :netmask => '255.255.128.0'
+      }
+  }]
+
+  server = AngryHash[
+    :public_ip  => '72.14.191.135',
+    :private_ip => '192.168.146.105',
+    :network => {
+      :public => {:gateway => '72.14.191.1'}
+    }]
+
+  server.provider = provider
+  server.network!.reverse_deep_merge!(server.provider.network || {})
+
+  Show( Yajl::Encoder.encode( server ) )
+end
