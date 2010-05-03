@@ -1,6 +1,8 @@
 require 'pathname'
 root = Pathname('../..').expand_path(__FILE__)
 require 'pp'
-require 'exemplor'
 $:.unshift root+'lib'
-require 'angry_hash'
+require root+'lib/angry_hash'
+
+require 'rubygems'
+require 'exemplor'
