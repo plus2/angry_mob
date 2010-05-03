@@ -1,8 +1,6 @@
 class AngryMob
   class TargetError < StandardError; end
   class Target
-    include Log
-
     autoload :Registry, 'angry_mob/target/registry'
     autoload :Defaults, "angry_mob/target/defaults"
     autoload :Notify  , "angry_mob/target/notify"
@@ -12,7 +10,6 @@ class AngryMob
 
       #### DSL for creating actions
 
-      # TODO = build NotImplemented raising stubs
       def known_actions *actions
         @known_actions = actions.flatten
       end
@@ -107,6 +104,7 @@ class AngryMob
     attr_accessor :act
 
     def mob; act.mob end
+    def ui ; mob.ui  end
 
     def initialize(args)
       @args = args
@@ -120,7 +118,6 @@ class AngryMob
     end
 
     def finalise_call!
-      puts "finalise_call... actions=#{@actions_called.inspect} da=#{self.class.default_action}"
       if @actions_called.blank? && da = self.class.default_action
         send(da)
       end
@@ -165,7 +162,7 @@ class AngryMob
     def do_validation!
       validate!
       unless @problems.blank?
-        @problems.each {|p| log "problem: #{p}"}
+        @problems.each {|p| ui.error "problem: #{p}"}
         raise "target[#{nickname}] wasn't valid"
       end
     end
@@ -193,58 +190,46 @@ class AngryMob
 
     # Executes actions with full context and all the trimmings.
     def noticing_changes(&blk)
-      log
-      log "+#{'-' * 20}"
-      log "  #{to_s}"
-      log
+      ui.push(to_s) do
+        do_validation!
 
-      do_validation!
+        before_call if respond_to?(:before_call)
 
-      before_call if respond_to?(:before_call)
-
-
-      # Give each registered guard a chance to stop processing.
-      for label,guard in guards
-        unless guard.call
-          log "stopped by guard: #{label}"
-          log_end
-          return
+        # Give each registered guard a chance to stop processing.
+        for label,guard in guards
+          unless guard.call
+            ui.skipped! "stopped by guard: #{label}"
+            return
+          end
         end
-      end
 
 
-      before_state
-      debug "before_state=#{before_state.inspect}"
+        before_state
+        ui.debug "before_state=#{before_state.inspect}"
 
 
-      # Here's the core of the target:
-      if node.dry_run?
-        log "DRY RUN: skipping action"
-      else
-        # riiight here:
-        yield
-      end
+        # Here's the core of the target:
+        if node.dry_run?
+          ui.skipped! "DRY RUN: skipping action"
+          return
+        else
+          # riiight here:
+          yield
+        end
 
-      debug "after_state=#{state.inspect}"
+        ui.debug "after_state=#{state.inspect}"
 
-      # If the state's changed, let it be known
-      if state_changed?
-        changed 
-        notify
-      else
-        log "target didn't change"
-      end
-
-      log_end
+        # If the state's changed, let it be known
+        if state_changed?
+          changed 
+          notify
+          ui.ok!
+        else
+          ui.skipped! "target didn't change"
+        end
       
+      end
       self
-    end
-
-    def log_end
-      log
-      log "  #{nickname}(#{default_object})"
-      log "#{'-' * 21}"
-      log
     end
 
     def node
@@ -263,7 +248,7 @@ class AngryMob
     # Give the target itself a neat place to react to changes.
     # Default implementation is a no-op.
     def changed
-      log "target changed"
+      ui.log "target changed"
       # no-op
     end
 
@@ -277,7 +262,6 @@ class AngryMob
     #
     #   dir("/tmp/config").changed? && sh("echo it changed")
     def changed?
-      puts "finalising"
       finalise_call!
       state_changed?
     end
@@ -312,6 +296,9 @@ class AngryMob
       node.resource_locator[self,name]
     end
 
+    def log(message="")
+      ui.log(message)
+    end
 
     # delegate to the default object
     def method_missing(method,*args,&blk)

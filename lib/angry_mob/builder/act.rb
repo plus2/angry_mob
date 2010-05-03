@@ -3,7 +3,6 @@ class AngryMob
 
     # A `Builder::Act` groups target calls.
     class Act
-      include Log
 
       attr_reader :mob, :name, :definition_file
 
@@ -11,6 +10,8 @@ class AngryMob
         @name = name
         @blk = blk
       end
+
+      def ui; mob.ui end
 
       # Binds the act to the mob and the file from which it came.
       def bind(mob,file)
@@ -30,13 +31,15 @@ class AngryMob
 
       # Executes the block via `instance_eval`
       def run!
-        @running = true
+        ui.push("act '#{name}'", :bubble => true) do
+          @running = true
 
-        instance_eval &@blk
+          instance_eval &@blk
 
-        __finalise_current_target
+          __finalise_current_target
 
-        @running = false
+          @running = false
+        end
       end
 
       # bundler + rubygems clusterfuck
