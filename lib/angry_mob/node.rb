@@ -1,4 +1,3 @@
-
 class AngryMob
   class Node < Struct.new(:name,:attributes,:resource_locator)
     include Log

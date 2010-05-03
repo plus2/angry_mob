@@ -120,7 +120,6 @@ class AngryMob
     end
 
     def finalise_call!
-      puts "finalise_call... actions=#{@actions_called.inspect} da=#{self.class.default_action}"
       if @actions_called.blank? && da = self.class.default_action
         send(da)
       end
