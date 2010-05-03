@@ -80,27 +80,12 @@ class AngryMob
       end
     end
 
+    def isay(message, colour=nil, force_new_line=(message.to_s !~ /( |\t)$/))
+      say spaces+message, colour, force_new_line
+    end
+
     def newline
       $stdout.puts "\n"
-    end
-
-    def target(banner)
-      Target.new(self,banner)
-    end
-
-
-    def pos
-      $stdout.print("\e[6n")
-      
-      c = $stdin.getc
-      puts "c: #{c}"
-
-      if c == 033
-        until (c = $stdin.getc) == ?R
-          puts c
-        end
-      end
-
     end
 
     def spaces
@@ -180,6 +165,7 @@ class AngryMob
         say " #{message}", :gray, false
       end
 
+      newline
       newline
     end
 
