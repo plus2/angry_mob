@@ -1,20 +1,21 @@
 class AngryMob
   class MobError < StandardError; end
   class Mob
-    include Log
-
     attr_reader :node, :scheduler, :act_scheduler, :target_registry
 
     def initialize
       @target_registry = Target::Registry.new(self)
-      @act_scheduler = ActScheduler.new
+      @act_scheduler = ActScheduler.new(self)
+      @ui = UI.new
+    end
+
+    def ui
+      @ui.current
     end
 
     def riot!(nodename, attributes)
       start = Time.now
-      log
-      log "An AngryMob is rioting on #{nodename}."
-      log
+      ui.info "An AngryMob is rioting on #{nodename}."
 
       @node               = Node.new(nodename, attributes)
       @act_scheduler.node = @node
@@ -23,10 +24,8 @@ class AngryMob
       setup!
       run!
 
-      log
-      log "beaten in #{Time.now-start}s"
-      log
-      log "#{nodename} has been beaten by an AngryMob. Have a nice day!"
+      ui.info "beaten in #{Time.now-start}s"
+      ui.info "#{nodename} has been beaten by an AngryMob. Have a nice day!"
 
       @target_registry.clear_instances!
       @act_scheduler.reset!
@@ -34,14 +33,14 @@ class AngryMob
 
     # bind selected targets to the node
     def setup!
-      log "setting up node"
+      ui.log "setting up node"
       defaults = AngryHash.new
 
       setup_node[node,defaults]       if setup_node
       node_defaults[node,defaults]    if node_defaults
       consolidate_node[node,defaults] if consolidate_node
 
-      log "setup complete"
+      ui.good "setup complete"
       
       self
     end

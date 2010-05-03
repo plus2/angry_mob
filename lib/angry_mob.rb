@@ -17,6 +17,7 @@ class AngryMob
   autoload :ActScheduler   , 'angry_mob/act_scheduler'
 
   autoload :Log            , 'angry_mob/log'
+  autoload :UI             , 'angry_mob/ui'
 
   autoload :Builder        , 'angry_mob/builder'
   autoload :MobLoader      , 'angry_mob/mob_loader'

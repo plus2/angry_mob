@@ -3,7 +3,7 @@ class AngryMob
   # This includes targets, delayed targets and notifications.
 
 	class TargetScheduler < Struct.new(:mob)
-		include Log
+    def ui; mob.ui end
 
     # The list of delayed targets.
     def delayed_targets
@@ -14,14 +14,14 @@ class AngryMob
     def run!
       running_targets = delayed_targets.reverse
       
-      log "running #{running_targets.size} delayed targets"
+      ui.log "running #{running_targets.size} delayed targets"
 
       #AngryMob::Builder::Act.synthesise(mob,'delayed_targets') do
         while target = running_targets.pop
           begin
             target.call(mob)
           rescue Object
-            log "error [#{$!.class}] #{$!}\ncalling #{target.inspect[0..200]}"
+            ui.error "error [#{$!.class}] #{$!}\ncalling #{target.inspect[0..200]}"
             raise $!
           end
         end

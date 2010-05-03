@@ -8,6 +8,7 @@ class AngryMob
     end
 
     def merge_defaults!(attrs)
+      puts "merging defaults"
       attributes.reverse_deep_merge!(attrs)
     end
 

@@ -1,13 +1,14 @@
 class AngryMob
 	class ActScheduler
-    include Log
-
     attr_writer :node
     attr_reader :acted
 
-    def initialize
+    def initialize(mob)
+      @mob = mob
       reset!
     end
+
+    def ui; @mob.ui end
 
     def reset!
       @act_names = nil
@@ -64,13 +65,12 @@ class AngryMob
       name = act.name.to_s
 
       if acted.include?(name)
-        log "(not re-running act #{name} - already run)"
+        ui.skipped! "(not re-running act #{name} - already run)"
         return
       end
 
       acted << name
 
-      log "running act #{name}"
       act.run!
     end
 	end
