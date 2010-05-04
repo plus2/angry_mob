@@ -1,5 +1,5 @@
+require 'eg_helper'
 require 'angry_mob'
-require 'exemplor'
 
 root = Pathname.here(__FILE__).parent
 

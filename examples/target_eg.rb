@@ -1,22 +1,26 @@
-require 'angry_mob'
-require 'exemplor'
+require 'eg_helper'
+require 'angry_mob/target'
+require 'angry_mob/singleton_target'
 
 class A < AngryMob::Target
-  nickname :a
 end
 
 class B < A
-  nickname :b
+end
+
+module Ooh
+  class C < AngryMob::Target
+  end
 end
 
 class C < AngryMob::SingletonTarget
-  nickname :c
 end
 
 
-eg 'a' do
-  AngryMob::Target.new_target(:a)
+eg 'target subclasses are recorded' do
+  Assert( AngryMob::Target::Tracking.subclasses == [AngryMob::Target,AngryMob::SingletonTarget,A,B,Ooh::C,C] )
 end
+__END__
 
 eg 'b' do
   AngryMob::Target.new_target(:b)
