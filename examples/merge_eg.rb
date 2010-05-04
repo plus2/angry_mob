@@ -120,3 +120,15 @@ eg 'deep regression' do
 
   Show( Yajl::Encoder.encode( server ) )
 end
+
+eg 'merge with symbol key' do
+  orig = AngryHash[{
+    "hosts_db"=>:db,
+    "run_list"=>["role[database]"],
+    "provider"=>"octopus"
+  }]
+
+  merged = orig.merge(:key=>"db")
+
+  Assert( merged.keys[1].is_a?(String) )
+end

@@ -11,12 +11,18 @@ class AngryHash < Hash
   def []=(key, value)
     regular_writer(__convert_key(key), self.class.__convert_value_without_dup(value))
   end
+
   def [](key)
     regular_reader(__convert_key(key))
   end
 
   def dup_and_store(key,value)
     regular_writer(__convert_key(key), self.class.__convert_value(value))
+  end
+
+  alias_method :regular_merge, :merge unless method_defined?(:regular_merge)
+  def merge(hash)
+    regular_merge(self.class.__convert_without_dup(hash))
   end
 
   def merge!(other_hash)
@@ -30,7 +36,7 @@ class AngryHash < Hash
   end
 
   def deep_merge(other_hash)
-    self.merge(other_hash) do |key, oldval, newval|
+    self.regular_merge(other_hash) do |key, oldval, newval|
       oldval = AngryHash.__convert_value(oldval)
       newval = AngryHash.__convert_value(newval)
 
@@ -135,9 +141,9 @@ class AngryHash < Hash
 
   # non-duplicating convert
   def self.__convert_without_dup(hash)
-    hash.inject(AngryHash.new) do |hash,(k,v)|
-      hash[__convert_key(k)] = __convert_value_without_dup(v)
-      hash
+    hash.inject(AngryHash.new) do |newhash,(k,v)|
+      newhash[__convert_key(k)] = __convert_value_without_dup(v)
+      newhash
     end
   end
 
@@ -154,32 +160,57 @@ class AngryHash < Hash
     else
       v
     end
-
   end
+
 
   # duplicating convert
   def self.__convert(hash,cycle_watch={})
-    hash.inject(AngryHash.new) do |hash,(k,v)|
+    new_hash = hash.inject(AngryHash.new) do |hash,(k,v)|
       hash.regular_writer( __convert_key(k), __convert_value(v,cycle_watch) )
       hash
     end
+
+    #puts "re-extend? #{AngryHash === hash} #{hash.__extending_modules.inspect if (AngryHash === hash)}"
+    #if AngryHash === hash && hash.__extended?
+      #puts "rex"
+      #hash.__extending_modules.each {|mod| puts "rexmod=#{mod}"; new_hash.extend(mod)}
+    #end
+
+    new_hash
   end
+
+  #def __extending_modules
+    #@extending_modules ||= []
+  #end
+  #def __extended?
+    #!__extending_modules.empty?
+  #end
+  #def extend(mod)
+    #puts "extending with #{mod}"
+    #__extending_modules << mod
+    #puts "extending mods: #{__extending_modules.inspect}"
+    #super
+  #end
   
 
-  def self.__convert_value(v,cycle_watch={})
-    v = v.to_hash if v.respond_to?(:to_hash)
 
+  def self.__convert_value(v,cycle_watch={})
     return if cycle_watch.key?(v.__id__)
-    cycle_watch[v.__id__] = true
+
+    original_v = v
+    v = v.to_hash if v.respond_to?(:to_hash)
 
     case v
     when Hash
+      cycle_watch[original_v.__id__] = true
       __convert(v,cycle_watch)
     when Array
+      cycle_watch[original_v.__id__] = true
       v.map {|vv| __convert_value(vv,cycle_watch)}
     when Fixnum,Symbol,NilClass,TrueClass,FalseClass,Float
       v
     else
+      cycle_watch[original_v.__id__] = true
       v.dup
     end
   end
