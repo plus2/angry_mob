@@ -6,11 +6,17 @@ class AngryMob
     def initialize
       @target_registry = Target::Registry.new(self)
       @act_scheduler = ActScheduler.new(self)
-      @ui = UI.new
+    end
+
+    def self.ui
+      @ui.current
+    end
+    def self.ui=(ui)
+      @ui = ui
     end
 
     def ui
-      @ui.current
+      self.class.ui
     end
 
     def riot!(nodename, attributes)

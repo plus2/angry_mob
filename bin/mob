@@ -64,6 +64,9 @@ end
 ARGV.extend ArgvExtension
 
 
+ui = AngryMob::UI.new(:debug => false)
+
+
 # TODO - merge in json snippets from the cmdline
 
 attributes ||= {}
@@ -88,7 +91,10 @@ attributes.dry_run = ARGV.dry_run?
 
 begin
 
+  # XXX not threadsafe, but what is?
+  AngryMob::Mob.ui = ui
   mob_loader = AngryMob::MobLoader.new
+  
   ARGV.mobs.each {|mob_path| mob_loader.load(mob_path)}
 
   mob = mob_loader.to_mob
