@@ -5,8 +5,6 @@ class AngryMob
       class << self
         def included(base) #:nodoc:
           base.send :extend,  ClassMethods
-          base.send :include, Invocation
-          base.send :include, Shell
         end
 
         # Returns the classes that inherit from AngryMob::Target
@@ -52,10 +50,13 @@ class AngryMob
           return unless public_instance_methods.include?(meth) ||
                         public_instance_methods.include?(meth.to_sym)
 
-          return if @no_tasks || !create_task(meth)
+          #return if @no_tasks || !create_task(meth)
 
           #is_thor_reserved_word?(meth, :task)
           AngryMob::Target::Tracking.register_klass_file(self)
+        end
+
+        def initialize_added
         end
 
       end

@@ -1,4 +1,5 @@
 class AngryMob
+  class MobLoadingError < StandardError; end
   class MobLoader
     include Log
 
@@ -11,11 +12,21 @@ class AngryMob
     def load(path)
       path = Pathname(path).expand_path
 
+      loader = path+'load.rb'
 
-      load_lib(path)
-      load_mob(path)
+      if loader.exist?
+        instance_eval(loader.read,loader.to_s)
+      else
+        load_lib(path)
+        load_targets(path)
+        load_mob(path)
+      end
 
       self
+    end
+
+    def load_targets(path)
+      # XXX
     end
 
     def load_lib(path)

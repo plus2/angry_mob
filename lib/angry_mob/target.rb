@@ -1,9 +1,13 @@
+require "angry_mob/target/tracking"
+
 class AngryMob
   class TargetError < StandardError; end
   class Target
-    autoload :Registry, 'angry_mob/target/registry'
+    autoload :Mother  , 'angry_mob/target/mother'
     autoload :Defaults, "angry_mob/target/defaults"
     autoload :Notify  , "angry_mob/target/notify"
+
+    include Tracking
 
     # Ok lets define some class level goodies.
     class << self
@@ -95,9 +99,9 @@ class AngryMob
         @nickname
       end
 
-      def to_s
-        "Target[#{nickname}]"
-      end
+      #def to_s
+      #  "Target[#{nickname}]"
+      #end
     end # class << self
 
 
