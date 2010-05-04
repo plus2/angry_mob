@@ -36,7 +36,12 @@ class AngryMob
         define_method(method_name, &blk)
         define_method(name) do |*args|
           @actions_called << method_name
-          noticing_changes { send(method_name) }
+          begin
+            @current_action = method_name
+            noticing_changes { send(method_name) }
+          ensure
+            @current_action = nil
+          end
         end
       end
 
@@ -45,7 +50,7 @@ class AngryMob
       #### building calls to this target
 
       def extract_args(*new_args)
-        args = AngryHash[new_args.extract_options!]
+        args = AngryHash.__convert_without_dup(new_args.extract_options!)
 
         if default_object = extract_default_object(new_args,args)
           args.default_object = default_object
@@ -100,7 +105,7 @@ class AngryMob
       self.class.nickname
     end
 
-    attr_reader :args
+    attr_reader :args, :current_action
     attr_accessor :act
 
     def mob; act.mob end

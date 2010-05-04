@@ -46,7 +46,8 @@ class AngryMob
     
     attr_reader :level, :result, :message, :stack
 
-    def initialize(min_level=0, stack=[])
+    def initialize(options={}, min_level=0, stack=[])
+      @options = options
       @stack = stack
       @min_level = @level = min_level
       @colour = CLEAR
@@ -118,8 +119,11 @@ class AngryMob
     end
     alias_method :bad, :error
 
+    def debug?
+      @debug ||= !(FalseClass === @options[:debug])
+    end
     def debug(message)
-      say spaces+message, :gray
+      say spaces+message, :gray if debug?
     end
 
     def warn(message)
@@ -128,7 +132,7 @@ class AngryMob
 
     def push(message,opts={},&block)
       start! message
-      subui = self.class.new(@level+1,stack)
+      subui = self.class.new(@options, @level+1,stack)
 
       stack.push subui
 
