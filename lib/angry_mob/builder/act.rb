@@ -59,8 +59,8 @@ class AngryMob
 
         __finalise_current_target
 
-        puts "act=#{name} nickname=#{nickname} from"
-        caller.grep(/from_file/).tapp
+        #ui.debug "act=#{name} nickname=#{nickname} from"
+        #caller.grep(/from_file/).tapp
 
         @current_target = target = mob.target_registry.target(nickname,*args,&blk)
 

@@ -58,8 +58,6 @@ class AngryMob
         args.options[:default_block] = block if block_given?
 
         klass.build_instance(mob,*args) {|key,instance|
-          puts "build instance callback: key=#{key} instance=#{instance}"
-
           # If they have no key, just recording instance.
           if !key && instance
             unkeyed_instances << instance
