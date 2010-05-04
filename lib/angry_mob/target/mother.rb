@@ -1,6 +1,6 @@
 class AngryMob
   class Target
-    class Registry
+    class Mother
       attr_reader :mob
 
       def initialize(mob)
