@@ -62,7 +62,7 @@ class AngryMob
         #ui.debug "act=#{name} nickname=#{nickname} from"
         #caller.grep(/from_file/).tapp
 
-        @current_target = target = mob.target_registry.target(nickname,*args,&blk)
+        @current_target = target = mob.target_mother.target(nickname,*args,&blk)
 
         target.setup_for_call!(self)                           if target.respond_to?(:setup_for_call!)
         target.merge_defaults(defaults.defaults_for(nickname)) if target.respond_to?(:merge_defaults)

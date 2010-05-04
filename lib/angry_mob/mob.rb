@@ -1,10 +1,10 @@
 class AngryMob
   class MobError < StandardError; end
   class Mob
-    attr_reader :node, :scheduler, :act_scheduler, :target_registry
+    attr_reader :node, :scheduler, :act_scheduler, :target_mother
 
     def initialize
-      @target_registry = Target::Registry.new(self)
+      @target_mother = Target::Mother.new(self)
       @act_scheduler = ActScheduler.new(self)
     end
 
@@ -33,7 +33,7 @@ class AngryMob
       ui.info "beaten in #{Time.now-start}s"
       ui.info "#{nodename} has been beaten by an AngryMob. Have a nice day!"
 
-      @target_registry.clear_instances!
+      @target_mother.clear_instances!
       @act_scheduler.reset!
     end
 
