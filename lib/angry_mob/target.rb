@@ -13,12 +13,18 @@ class AngryMob
     # Ok lets define some class level helpings.
     class << self
       def default_action
+        puts "#{self} next action will be default"
         @set_default_action = true
       end
 
       def actions
         @actions ||= ['nothing']
       end
+      def all_actions
+        @all_actions ||= from_superclass(:all_actions, ['nothing'])
+        @all_actions |= actions
+      end
+
       def default_action_name
         @default_action
       end
@@ -32,18 +38,23 @@ class AngryMob
 
       protected
       def create_action(method)
-        return if self == AngryMob::Target
-        puts "creating action #{method} for #{self}"
+        return if self == AngryMob::Target # XXX protect methods properly and remove this
+        # puts "creating action #{method} for #{self}"
 
         if @set_default_action && @default_action
           raise ArgumentError, "#{nickname}() can only have one default_action"
         end
 
-        @default_action = method.to_s
+        @default_action = method.to_s if @set_default_action
         actions << method.to_s
 
         @set_default_action = nil
       end
+
+      def baseclass #:nodoc:
+        AngryMob::Target
+      end
+
     end # class << self
 
     def nickname
