@@ -25,14 +25,31 @@ class AngryMob
         @mob.target(@target,*args)
       end
 
+      # TODO XXX abstract arguments into new class, for easy manipulation ffs
+      def inject_actions
+        args = @target_args ||= []
+
+        if Hash === args.last
+          opts = args[-1] = AngryHash.__convert_without_dup(args.last)
+        else 
+          args << opts = AngryHash.new
+        end
+
+        opts.delete('action')
+        opts.actions = @actions
+
+        args.tapp
+      end
+
       def call(*)
+        inject_actions
+        
         # localise to save into closure
         target,target_args,actions = @target,@target_args,@actions
 
         # this block is instance_eval'd
         @act.in_sub_act do
-          target = send(target, (target_args || []).dup)
-          actions.norm.each {|action| target.send(action)}
+          send(target.tapp(:tgt), *(target_args || []).dup.tapp(:args))
         end
       end
 
