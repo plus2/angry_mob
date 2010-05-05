@@ -20,10 +20,9 @@ class AngryMob
 
       def call(act)
         target.act = act
-        puts "target=#{target}"
         target.noticing_changes(args) {
           actions.each {|action|
-            target.send(action.tapp(:action))
+            target.send(action)
           }
         }
       end
@@ -35,7 +34,11 @@ class AngryMob
       def validate_actions!
         @actions = [ args.actions, args.action ].norm.map{|s| s.to_s}
 
-        extras = actions - klass.actions
+        #klass.tapp
+        #actions.tapp('requested actions')
+        #klass.default_action_name.tapp('default action')
+
+        extras = actions - klass.all_actions
         raise(ArgumentError, "#{nickname}() unknown actions #{extras.inspect}") unless extras.empty? || extras == ['nothing']
 
         actions << klass.default_action_name if actions.empty?
@@ -44,16 +47,20 @@ class AngryMob
           raise ArgumentError, "#{klass.nickname}() no actions selected, and no default action defined"
         end
 
-        puts "actions validated"
-        actions.tapp
+        actions.tapp('selected action')
       end
 
 
       def extract_args(args)
         case args.size
         when 0,1
-          new_args = AngryHash.new
-          new_args.default_object = args[0]
+          if Hash === args[0]
+            new_args = AngryHash.__convert_without_dup(args[0])
+            new_args.default_object = new_args
+          else
+            new_args = AngryHash.new
+            new_args.default_object = args[0]
+          end
 
         when 2
           new_args = AngryHash.__convert_without_dup(args[1])
