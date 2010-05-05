@@ -22,7 +22,7 @@ class AngryMob
         def register_klass_file(klass) #:nodoc:
           file = caller[1].match(/(.*):\d+/)[1]
 
-          nickname = klass.nickname
+          nickname = klass.nickname.to_s
           AngryMob::Target::Tracking.subclasses[nickname] = klass unless AngryMob::Target::Tracking.subclasses.key?(nickname)
 
           file_subclasses = AngryMob::Target::Tracking.subclass_files[File.expand_path(file)]

@@ -4,63 +4,29 @@ class AngryMob
   class TargetError < StandardError; end
   class Target
     autoload :Mother  , 'angry_mob/target/mother'
+    autoload :Call    , 'angry_mob/target/call'
     autoload :Defaults, "angry_mob/target/defaults"
     autoload :Notify  , "angry_mob/target/notify"
 
     include Tracking
 
-    # Ok lets define some class level goodies.
+    # Ok lets define some class level helpings.
     class << self
-
-      #### DSL for creating actions
-
       def default_action
-        @default_action = true
+        @set_default_action = true
       end
-
 
       def actions
-        @actions ||= Dictionary.new
+        @actions ||= ['nothing']
       end
 
-      def action(name, &blk)
-        raise(TargetError, "action already exists for #{self}") if actions.key?(name)
-        actions[name] = true
+      def select_actions(*keys)
+        keys   = keys.norm.map {|a| a.to_s}
+        extras = (keys - actions)
 
-        method_name = "__action_#{name}"
+        raise(ArgumentError, "#{nickname}() unknown actions #{extras.inspect}") unless extras.empty?
 
-        define_method(method_name, &blk)
-        define_method(name) do |*args|
-          @actions_called << method_name
-          begin
-            @current_action = method_name
-            noticing_changes { send(method_name) }
-          ensure
-            @current_action = nil
-          end
-        end
-      end
-
-
-
-      #### building calls to this target
-
-      def extract_args(*new_args)
-        args = AngryHash.__convert_without_dup(new_args.extract_options!)
-
-        if default_object = extract_default_object(new_args,args)
-          args.default_object = default_object
-        end
-
-        args
-      end
-
-      # Extracts the default_object from the args.
-      # This could be overridden by subclasses.
-      def extract_default_object(arg_list, arg_hash)
-        unless arg_list.empty?
-          (arg_list.size > 1 ? arg_list : arg_list.first)
-        end
+        keys.empty? ? [@default_action] : keys
       end
 
       # Based on the args, makes a unique key for a target instance.
@@ -69,34 +35,21 @@ class AngryMob
         args.key
       end
 
-      # Build a call-proxy for the named target.
-      def build_instance(mob, *new_args, &blk)
-        args = extract_args(*new_args)
-        instance_key = instance_key(args)
-
-        # fetch an existing instance, if there is one
-        target       = yield(instance_key, nil)
-
-        # Create the instance if necessary.
-        if target.nil?
-          target = new(args,&blk)
-          yield instance_key, target
-        end
-
-        target
-      end
-
       protected
       def create_action(method)
+        return if self == AngryMob::Target
+        puts "creating action #{method} for #{self}"
 
+        if @set_default_action && @default_action
+          raise ArgumentError, "#{nickname}() can only have one default_action"
+        end
+
+        @default_action = method.to_s
+        actions << method.to_s
+
+        @set_default_action = nil
       end
-      
-
-      #def to_s
-      #  "Target[#{nickname}]"
-      #end
     end # class << self
-
 
     def nickname
       self.class.nickname
@@ -110,103 +63,31 @@ class AngryMob
 
     def log(message); mob.ui.log message end
 
-    def initialize(args)
-      @args = args
-    end
-
     #### Call generation
-
-    def setup_for_call!(act)
-      @act = act
-      @actions_called = []
-    end
-
-    def finalise_call!
-      if @actions_called.blank? && da = self.class.default_action
-        send(da)
-      end
-    end
 
     # nothing actions are no-ops but by being called, prevent the default action being called
     def nothing(*)
       false
     end
 
-    def __action_nothing(*)
-      false
-    end
-
 
     #### Definition-time helpers
-    def merge_defaults(attrs)
-      @args.reverse_deep_merge!(attrs)
-    end
-
-    def guards
-      @guards ||= []
-    end
-
-    # Adds an if? guard
-    def if?(label='if?{}',&block)
-      guards << [label,block]
-      self
-    end
-
-    # Adds an unless? guard
-    def unless?(label='unless?{}',&block)
-      guards << [label, lambda { not yield }]
-      self
-    end
-
-
-
-    #### Runtime
-
-    # Do some very basic runtime validation. This validation is bound very late!
-    def do_validation!
-      validate!
-      unless @problems.blank?
-        @problems.each {|p| ui.error "problem: #{p}"}
-        raise "target[#{nickname}] wasn't valid"
+    def to_s
+      if default_object
+        "#{nickname}(#{default_object})"
+      else
+        "#{nickname}()"
       end
     end
 
-    # Targets should override this (possibly calling super) to do their own validation.
-    def validate!
-      problem!("The default object wasn't set") if default_object.blank?
-    end
-
-    # Flag a validation problem.
-    def problem!(problem)
-      @problems ||= []
-      @problems << problem
-    end
-
-
-    # Calculate and cache the state before any actions have been performed.
-    def before_state
-      @before_state ||= state
-    end
-
-    def to_s
-      "#{nickname}(#{default_object})"
-    end
 
     # Executes actions with full context and all the trimmings.
-    def noticing_changes(&blk)
+    def noticing_changes(args,&blk)
+      @args = args
       ui.push(to_s) do
         do_validation!
 
         before_call if respond_to?(:before_call)
-
-        # Give each registered guard a chance to stop processing.
-        for label,guard in guards
-          unless guard.call
-            ui.skipped! "stopped by guard: #{label}"
-            return
-          end
-        end
-
 
         before_state
         ui.debug "before_state=#{before_state.inspect}"
@@ -236,6 +117,45 @@ class AngryMob
       self
     end
 
+    # Has the state changed?
+    #   dir("/tmp/config").changed? && sh("echo it changed")
+    def changed?
+      state_changed?
+    end
+
+
+    protected
+
+    #### Runtime
+
+    # Do some very basic runtime validation. This validation is bound very late!
+    def do_validation!
+      validate!
+      unless @problems.blank?
+        @problems.each {|p| ui.error "problem: #{p}"}
+        raise "target[#{nickname}] wasn't valid"
+      end
+    end
+
+    # Targets should override this (possibly calling super) to do their own validation.
+    def validate!
+      problem!("The default object wasn't set") if default_object.blank?
+    end
+
+    # Flag a validation problem.
+    def problem!(problem)
+      @problems ||= []
+      @problems << problem
+    end
+
+
+    # Calculate and cache the state before any actions have been performed.
+    def before_state
+      @before_state ||= state
+    end
+
+
+
     def node
       mob.node
     end
@@ -261,15 +181,6 @@ class AngryMob
       before_state != state
     end
 
-    # Has the state changed? and call finalise_call!
-    # We use this to ensure that the target is called before testing whether to flow on to a subsequent target:
-    #
-    #   dir("/tmp/config").changed? && sh("echo it changed")
-    def changed?
-      finalise_call!
-      state_changed?
-    end
-
     # Returns the state of the target.
     # Default implementation is a random number (i.e. it always changes)
     def state
@@ -287,6 +198,8 @@ class AngryMob
     end
 
     def default_object!
+      return unless args
+
       case args.default_object
       when Proc
         args.default_object[]

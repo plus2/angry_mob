@@ -12,6 +12,7 @@ class AngryMob
 
   autoload :Target         , 'angry_mob/target'
   autoload :SingletonTarget, 'angry_mob/singleton_target'
+  autoload :Action         , 'angry_mob/action'
 
   autoload :TargetScheduler, 'angry_mob/target_scheduler'
   autoload :ActScheduler   , 'angry_mob/act_scheduler'

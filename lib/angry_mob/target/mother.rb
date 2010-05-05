@@ -7,20 +7,12 @@ class AngryMob
         @mob = mob
       end
 
-      # target classes
       def target_classes
-        # TODO - guard against adding 2x
-        @target_classes ||= AngryHash.new
-      end
-
-      def []=(nickname,target_class)
-        target_classes[nickname] = target_class
-      end
-      def [](nickname)
-        target_classes[nickname]
+        Target::Tracking.subclasses
       end
 
       def pose_as(nickname,nickname_to_pose_as)
+        raise "not impl"
         nickname = nickname.to_s
         nickname_to_pose_as = nickname_to_pose_as.to_s
 
@@ -50,31 +42,23 @@ class AngryMob
         @key_classes ||= Hash.new {|h,k| h[k] = []}
       end
 
-      def target(nickname, *args, &block)
+      def target_call(nickname, *args)
+        raise(MobError, "no target nicknamed '#{nickname}'\n#{target_classes.keys.inspect}") unless target_classes.key?(nickname.to_s)
+        klass = target_classes[nickname.to_s]
 
-        raise(MobError, "no target nicknamed '#{nickname}' found\n#{target_classes.keys.inspect}") unless target_classes.key?(nickname)
-        klass = target_classes[nickname]
+        call = Target::Call.new( klass, *args )
 
-        args.options[:default_block] = block if block_given?
+        if key = call.instance_key
+          target = target_instances[key] ||= klass.new
+          # record which klass has which keys - key_classes
+        else
+          unkeyed_instances << target = klass.new
+        end
 
-        klass.build_instance(mob,*args) {|key,instance|
-          # If they have no key, just recording instance.
-          if !key && instance
-            unkeyed_instances << instance
-            instance
-            
-          # If there's a key but no instance, fetch an existing instance
-          elsif key && !instance
-            target_instances[key.to_s]
+        call.target = target
 
-          # If there's both, record the instance under the key.
-          elsif key && instance
-            key_classes[klass] << key.to_s
-            target_instances[key.to_s] = instance
-          end
-        }
+        call
       end
     end
   end
 end
-

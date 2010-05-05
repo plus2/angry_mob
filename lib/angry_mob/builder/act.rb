@@ -37,8 +37,6 @@ class AngryMob
 
           instance_eval &@blk
 
-          __finalise_current_target
-
           @running = false
         end
       end
@@ -55,27 +53,14 @@ class AngryMob
       end
 
       # Schedules a target, adding call-location context along the way.
-      def __run_target(nickname,*args,&blk)
+      def __run_target(nickname,*args)
+        call = mob.target_mother.target_call(nickname,*args)
 
-        __finalise_current_target
+        call.merge_defaults(defaults.defaults_for(nickname))
+        call.call(self)
 
-        #ui.debug "act=#{name} nickname=#{nickname} from"
-        #caller.grep(/from_file/).tapp
-
-        @current_target = target = mob.target_mother.target(nickname,*args,&blk)
-
-        target.setup_for_call!(self)                           if target.respond_to?(:setup_for_call!)
-        target.merge_defaults(defaults.defaults_for(nickname)) if target.respond_to?(:merge_defaults)
-
-        target
+        call.target
       end
-
-      def __finalise_current_target
-        if @current_target && @current_target.respond_to?(:finalise_call!)
-          @current_target.finalise_call!
-        end
-      end
-      alias_method :finalise!, :__finalise_current_target
 
       def in_sub_act(&blk)
         sub_act = self.class.new("#{name}-sub-act",&blk)
@@ -96,7 +81,7 @@ class AngryMob
       # directly schedule a call on the delayed list
       def later
         n = Target::Notify.new(self)
-        mob.scheduler.schedule_delayed_call n
+        mob.target_scheduler.schedule_delayed_call n
         n
       end
 

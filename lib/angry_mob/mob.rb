@@ -1,7 +1,7 @@
 class AngryMob
   class MobError < StandardError; end
   class Mob
-    attr_reader :node, :scheduler, :act_scheduler, :target_mother
+    attr_reader :node, :target_scheduler, :act_scheduler, :target_mother
 
     def initialize
       @target_mother = Target::Mother.new(self)
@@ -28,7 +28,7 @@ class AngryMob
 
       @node               = Node.new(nodename, attributes)
       @act_scheduler.node = @node
-      @scheduler          = TargetScheduler.new(self)
+      @target_scheduler   = TargetScheduler.new(self)
 
       setup!
       run!
@@ -57,7 +57,7 @@ class AngryMob
     # runs acts and then delayed targets
     def run!
       act_scheduler.run!
-      scheduler.run!
+      target_scheduler.run!
     end
 
     # building
