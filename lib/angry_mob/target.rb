@@ -14,18 +14,10 @@ class AngryMob
 
       #### DSL for creating actions
 
-      def known_actions *actions
-        @known_actions = actions.flatten
+      def default_action
+        @default_action = true
       end
 
-      def default_action(name=nil, &blk)
-        if name && blk
-          action name, &blk
-          @default_action = name
-        else
-          @default_action
-        end
-      end
 
       def actions
         @actions ||= Dictionary.new
@@ -94,10 +86,11 @@ class AngryMob
         target
       end
 
+      protected
+      def create_action(method)
 
-      def nickname
-        @nickname
       end
+      
 
       #def to_s
       #  "Target[#{nickname}]"
