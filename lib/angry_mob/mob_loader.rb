@@ -3,32 +3,14 @@ require 'tsort'
 class AngryMob
   class MobLoadingError < StandardError; end
 
-  # `TargetList` is a hash for topologically sorting target blocks. Thus it provides simple dependency handling.
-  class MobList < Hash
-    include TSort
-
-    alias_method :tsort_each_node, :each_key
-    def tsort_each_child(node, &block)
-      fetch(node)[:dependencies].each(&block)
-    end
-
-    def add_path(name,path,dependencies)
-      dependencies = [ dependencies ].flatten.compact.map {|k| k.to_s}
-      self[name.to_s] = {:path => blk, :dependencies => dependencies}
-    end
-
-    def each_target(&block)
-      each_strongly_connected_component do |name|
-        name = name.first
-        yield name, fetch(name)[:block]
-      end
-    end
-  end
-
-
+  ::Target = AngryMob::Target
 
   class MobLoader
     attr_reader :builder, :mobs, :loaded_mobs
+
+    def ui
+      Mob.ui
+    end
 
     def initialize
       @builder = Builder.new
@@ -45,23 +27,29 @@ class AngryMob
 
     def load_a_mob(name)
       path = mobs[name]
-      puts "loading mob #{name} at path #{path}"
       raise "unable to load unknown mob #{name}" unless path
 
       return if loaded_mobs[name]
       loaded_mobs[name] = true
 
-      loader = path+'load.rb'
+      old_path,@current_path = @current_path,path
 
-      if loader.exist?
-        instance_eval(loader.read,loader.to_s)
-      else
-        load_lib(path)
-        load_targets(path)
-        load_mob(path)
+      ui.push("loading mob #{name} at path #{path}") do
+
+        loader = path+'load.rb'
+
+        if loader.exist?
+          instance_eval(loader.read,loader.to_s)
+        else
+          load_lib(path+'lib')
+          load_targets(path+'targets')
+          load_acts(path+'acts')
+        end
       end
 
       self
+    ensure
+      @current_path = old_path
     end
 
     def load_mobs
@@ -79,18 +67,27 @@ class AngryMob
     # API
     alias_method :depends_on_mob, :load_a_mob
 
-    def load_targets(path)
-      # XXX
+    def load_targets(path=(@current_path+'targets'))
+      raise "targets path #{path} didn't exist" unless path.exist?
+      ui.log "loading targets from #{path}"
+
+      $LOAD_PATH << path
+      Pathname.glob(path+'**/*.rb').each do |file|
+        require file
+      end
     end
 
-    def load_lib(path)
-      $LOAD_PATH << path+'lib'
+    def load_lib(path=(@current_path+'lib'))
+      raise "lib path #{path} didn't exist" unless path.exist?
+      ui.log "adding load path #{path}"
+      $LOAD_PATH << path
     end
 
-    def load_mob(path)
-      puts "loading mob from #{path}"
+    def load_acts(path=(@current_path+'acts'))
+      raise "acts path #{path} didn't exist" unless path.exist?
+      ui.log "loading acts from #{path}"
 
-      Pathname.glob(path+'mob/**/*.rb').each do |file|
+      Pathname.glob(path+'**/*.rb').each do |file|
         @builder.from_file(file)
       end
     end
