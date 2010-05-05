@@ -38,7 +38,7 @@ class AngryMob
         extras = actions - klass.actions
         raise(ArgumentError, "#{nickname}() unknown actions #{extras.inspect}") unless extras.empty? || extras == ['nothing']
 
-        actions << klass.default_action if actions.empty?
+        actions << klass.default_action_name if actions.empty?
 
         if actions.norm.empty?
           raise ArgumentError, "#{klass.nickname}() no actions selected, and no default action defined"
