@@ -1,4 +1,3 @@
-
 class AngryMob
   class Target
     module Tracking
@@ -9,7 +8,7 @@ class AngryMob
 
         # Returns the classes that inherit from AngryMob::Target
         def subclasses
-          @subclasses ||= []
+          @subclasses ||= {}
         end
 
         # Returns the files where the subclasses are kept.
@@ -22,7 +21,9 @@ class AngryMob
         #
         def register_klass_file(klass) #:nodoc:
           file = caller[1].match(/(.*):\d+/)[1]
-          AngryMob::Target::Tracking.subclasses << klass unless AngryMob::Target::Tracking.subclasses.include?(klass)
+
+          nickname = klass.nickname
+          AngryMob::Target::Tracking.subclasses[nickname] = klass unless AngryMob::Target::Tracking.subclasses.key?(nickname)
 
           file_subclasses = AngryMob::Target::Tracking.subclass_files[File.expand_path(file)]
           file_subclasses << klass unless file_subclasses.include?(klass)
@@ -50,10 +51,28 @@ class AngryMob
           return unless public_instance_methods.include?(meth) ||
                         public_instance_methods.include?(meth.to_sym)
 
-          #return if @no_tasks || !create_task(meth)
+          return unless create_action(meth)
 
           #is_thor_reserved_word?(meth, :task)
           AngryMob::Target::Tracking.register_klass_file(self)
+        end
+
+        def nickname(name=nil)
+          if name
+            @nickname = name
+            AngryMob::Target::Tracking.register_klass_file(self)
+          else
+            if @nickname
+              @nickname
+            else
+              Util.snake_case(to_s)
+            end
+          end
+        end
+
+        protected
+
+        def create_action(meth)
         end
 
         def initialize_added

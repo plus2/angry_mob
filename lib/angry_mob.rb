@@ -18,6 +18,7 @@ class AngryMob
 
   autoload :Log            , 'angry_mob/log'
   autoload :UI             , 'angry_mob/ui'
+  autoload :Util           , 'angry_mob/util'
 
   autoload :Builder        , 'angry_mob/builder'
   autoload :MobLoader      , 'angry_mob/mob_loader'

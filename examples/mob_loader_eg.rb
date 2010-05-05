@@ -17,8 +17,8 @@ eg 'load' do
 
   Show( @mob_loader.mobs )
   Show( @mob_loader.loaded_mobs )
-  Show( AngryMob::Target::Tracking.subclasses.map {|s| s.to_s} )
-  Assert( ! (AngryMob::Target::Tracking.subclasses - [AngryMob::Target]).empty? )
+  Show( AngryMob::Target::Tracking.subclasses.map {|k,s| [k,s.to_s] } )
+  Assert( ! (AngryMob::Target::Tracking.subclasses.values - [AngryMob::Target]).empty? )
 
 
   # mob.riot!( 'gigantor', {:acts => ['plus2basics']} )
