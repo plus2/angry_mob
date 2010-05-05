@@ -89,15 +89,21 @@ class AngryMob
 
     # Executes actions with full context and all the trimmings.
     def noticing_changes(args,&blk)
+      reset!
       @args = args
+
       ui.push(to_s) do
         do_validation!
 
+        before_state
         before_call if respond_to?(:before_call)
 
-        before_state
         ui.debug "before_state=#{before_state.inspect}"
 
+        if skip?
+          ui.skipped! "skipping"
+          return
+        end
 
         # Here's the core of the target:
         if node.dry_run?
@@ -131,6 +137,19 @@ class AngryMob
 
 
     protected
+
+    def reset!
+      @skip = nil
+      @args = nil
+    end
+
+    def skip!
+      @skip = true
+    end
+
+    def skip?
+      !! @skip
+    end
 
     #### Runtime
 
