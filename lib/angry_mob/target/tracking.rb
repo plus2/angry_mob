@@ -72,6 +72,18 @@ class AngryMob
 
         protected
 
+        # Retrieves a value from superclass. If it reaches the baseclass,
+        # returns default.
+        def from_superclass(method, default=nil)
+          if self == baseclass || !superclass.respond_to?(method, true)
+            default
+          else
+            value = superclass.send(method)
+            value.dup if value
+          end
+        end
+
+
         def create_action(meth)
         end
 
