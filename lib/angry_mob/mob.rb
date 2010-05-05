@@ -9,7 +9,10 @@ class AngryMob
     end
 
     def self.ui
-      @ui.current
+      (@ui ||= ui!).current
+    end
+    def self.ui!
+      @ui = UI.new
     end
     def self.ui=(ui)
       @ui = ui

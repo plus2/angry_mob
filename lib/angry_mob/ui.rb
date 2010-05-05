@@ -110,6 +110,11 @@ class AngryMob
       say spaces+message, :green
     end
 
+    def task(message)
+      isay ">> ", :blue
+      say message
+    end
+
     def log(message)
       say spaces+message, :white
     end
