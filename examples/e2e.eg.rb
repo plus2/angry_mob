@@ -8,7 +8,7 @@ def load_mob
 
   @mob_loader.add_mob("~/dev/plus2/common_mob")
   @mob_loader.builder.act('flooper') do
-    sh 'ls'
+    sh 'ls', :action => :execute
   end
 
   @mob = @mob_loader.to_mob

@@ -28,9 +28,16 @@ class AngryMob
         }
       end
 
+      def nickname
+        klass.nickname
+      end
+
       def validate_actions!
-        args.actions ||= []
-        @actions = klass.select_actions( args.actions.norm )
+        @actions = [ args.actions, args.action ].norm.map{|s| s.to_s}
+
+        extras = actions - klass.actions
+        raise(ArgumentError, "#{nickname}() unknown actions #{extras.inspect}") unless extras.empty? || extras == ['nothing']
+
         actions << klass.default_action if actions.empty?
 
         if actions.norm.empty?

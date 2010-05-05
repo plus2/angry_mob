@@ -19,15 +19,10 @@ class AngryMob
       def actions
         @actions ||= ['nothing']
       end
-
-      def select_actions(*keys)
-        keys   = keys.norm.map {|a| a.to_s}
-        extras = (keys - actions)
-
-        raise(ArgumentError, "#{nickname}() unknown actions #{extras.inspect}") unless extras.empty?
-
-        keys.empty? ? [@default_action] : keys
+      def default_action_name
+        @default_action
       end
+
 
       # Based on the args, makes a unique key for a target instance.
       # This could be overridden by subclasses.
