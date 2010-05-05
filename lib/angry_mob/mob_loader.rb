@@ -36,6 +36,8 @@ class AngryMob
 
       ui.push("loading mob #{name} at path #{path}") do
 
+        mob_root = path
+
         loader = path+'load.rb'
 
         if loader.exist?

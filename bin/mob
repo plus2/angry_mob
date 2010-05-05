@@ -95,7 +95,7 @@ begin
   AngryMob::Mob.ui = ui
   mob_loader = AngryMob::MobLoader.new
   
-  ARGV.mobs.each {|mob_path| mob_loader.load(mob_path)}
+  ARGV.mobs.each {|mob_path| mob_loader.add_mob(mob_path)}
 
   mob = mob_loader.to_mob
   mob.riot!( nodename, attributes )
