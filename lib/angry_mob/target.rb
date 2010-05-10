@@ -7,13 +7,13 @@ class AngryMob
     autoload :Call    , 'angry_mob/target/call'
     autoload :Defaults, "angry_mob/target/defaults"
     autoload :Notify  , "angry_mob/target/notify"
+    autoload :Arguments, "angry_mob/target/arguments"
 
     include Tracking
 
     # Ok lets define some class level helpings.
     class << self
       def default_action
-        puts "#{self} next action will be default"
         @set_default_action = true
       end
 
@@ -191,7 +191,7 @@ class AngryMob
 
     # Very simply delegates notification to the target scheduler
     def notify
-      mob.scheduler.notify( args.notify ) if args.notify
+      mob.target_scheduler.notify( args.notify ) if args.notify
     end
 
     # Give the target itself a neat place to react to changes.
