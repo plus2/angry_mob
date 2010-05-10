@@ -67,9 +67,12 @@ class AngryMob
 
 
     # API
+
     alias_method :depends_on_mob, :load_a_mob
 
-    def load_targets(path=(@current_path+'targets'))
+    def load_targets(path=nil)
+      path ||= mob_root + 'targets'
+
       raise "targets path #{path} didn't exist" unless path.exist?
       ui.log "loading targets from #{path}"
 
@@ -79,13 +82,18 @@ class AngryMob
       end
     end
 
-    def load_lib(path=(@current_path+'lib'))
+    def load_lib(path=nil)
+      path ||= mob_root + 'lib'
+
       raise "lib path #{path} didn't exist" unless path.exist?
+
       ui.log "adding load path #{path}"
       $LOAD_PATH << path
     end
 
-    def load_acts(path=(@current_path+'acts'))
+    def load_acts(path=nil)
+      path ||= mob_root + 'acts'
+
       raise "acts path #{path} didn't exist" unless path.exist?
       ui.log "loading acts from #{path}"
 
