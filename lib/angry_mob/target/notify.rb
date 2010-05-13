@@ -17,39 +17,20 @@ class AngryMob
         @when == :later
       end
 
-      def target_call
-        # XXX seems like the wrong place for all this...
-        args = ( @target_args || [] ).dup
-        options = args.options
-
-        @mob.target(@target,*args)
+      def inject_actions(args)
+        args.actions = @actions
       end
 
-      # TODO XXX abstract arguments into new class, for easy manipulation ffs
-      def inject_actions
-        args = @target_args ||= []
-
-        if Hash === args.last
-          opts = args[-1] = AngryHash.__convert_without_dup(args.last)
-        else 
-          args << opts = AngryHash.new
-        end
-
-        opts.delete('action')
-        opts.actions = @actions
-
-        args.tapp
-      end
-
-      def call(*)
-        inject_actions
+      def call(mob)
+        args = Arguments.parse(@target_args)
+        inject_actions(args)
         
         # localise to save into closure
-        target,target_args,actions = @target,@target_args,@actions
+        target = @target
 
         # this block is instance_eval'd
         @act.in_sub_act do
-          send(target.tapp(:tgt), *(target_args || []).dup.tapp(:args))
+          send(target, args)
         end
       end
 
@@ -63,7 +44,6 @@ class AngryMob
 
         else
           @actions << method
-
         end
 
         return self

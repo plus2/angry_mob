@@ -46,16 +46,19 @@ class AngryMob
         raise(MobError, "no target nicknamed '#{nickname}'\n#{target_classes.keys.inspect}") unless target_classes.key?(nickname.to_s)
         klass = target_classes[nickname.to_s]
 
-        call = Target::Call.new( klass, *args )
+        args = Arguments.parse(args)
 
-        if key = call.instance_key
-          target = target_instances[key] ||= klass.new
-          # record which klass has which keys - key_classes
+        if key = Target::Call.instance_key(klass,args)
+          if call = target_instances[key]
+            call.add_args(args)
+          else
+            call = target_instances[key] = Target::Call.new( klass, args )
+          end
         else
-          unkeyed_instances << target = klass.new
+          unkeyed_instances << call = Target::Call.new( klass, args )
         end
 
-        call.target = target
+        call.target ||= klass.new
 
         call
       end
