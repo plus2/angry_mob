@@ -8,6 +8,7 @@ class AngryMob
       @act_scheduler = ActScheduler.new(self)
     end
 
+    # delegate to the curren ui
     def self.ui
       (@ui ||= ui!).current
     end
@@ -17,18 +18,18 @@ class AngryMob
     def self.ui=(ui)
       @ui = ui
     end
-
     def ui
       self.class.ui
     end
 
+    # main entry point the the whole system
     def riot!(nodename, attributes)
       start = Time.now
       ui.info "An AngryMob is rioting on #{nodename}."
 
       @node               = Node.new(nodename, attributes)
       @act_scheduler.node = @node
-      @target_scheduler   = TargetScheduler.new(self)
+      @target_scheduler   = Target::Scheduler.new(self)
 
       setup!
       run!

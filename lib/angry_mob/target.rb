@@ -3,6 +3,7 @@ require "angry_mob/target/tracking"
 class AngryMob
   class TargetError < StandardError; end
   class Target
+    autoload :Scheduler, 'angry_mob/target/scheduler'
     autoload :Mother  , 'angry_mob/target/mother'
     autoload :Call    , 'angry_mob/target/call'
     autoload :Defaults, "angry_mob/target/defaults"
@@ -39,7 +40,6 @@ class AngryMob
       protected
       def create_action(method)
         return if self == AngryMob::Target # XXX protect methods properly and remove this
-        # puts "creating action #{method} for #{self}"
 
         if @set_default_action && @default_action
           raise ArgumentError, "#{nickname}() can only have one default_action"
@@ -189,6 +189,7 @@ class AngryMob
       Notify.new(act)
     end
 
+    # Called when the state has changed.
     # Very simply delegates notification to the target scheduler
     def notify
       mob.target_scheduler.notify( args.notify ) if args.notify
