@@ -6,44 +6,36 @@ class AngryMob
       def ui; mob.ui end
 
       # The list of delayed targets.
-      def delayed_targets
-        @delayed_targets ||= []
+      def notifications
+        @notifications ||= []
       end
 
-      # Iterates through the targets, then the delayed targets.
-      def run!
-        running_targets = delayed_targets.reverse
-        
-        ui.log "running #{running_targets.size} delayed targets"
+      def select(&block); notifications.select(&block) end
+      def find(&block); notifications.find(&block) end
+      def any?(&block); notifications.any?(&block) end
+      def all?(&block); notifications.all?(&block) end
 
-        #AngryMob::Builder::Act.synthesise(mob,'delayed_targets') do
-          while target = running_targets.pop
-            begin
-              target.call(mob)
-            rescue Object
-              ui.error "error [#{$!.class}] #{$!}\ncalling #{target.inspect[0..200]}"
-              raise $!
-            end
-          end
-        #end
+      # queries
+      def include_nickname?(nickname)
+        nickname = nickname.to_s
+        notifications.any? {|n| n.target == nickname}
+      end
+
+      def __predicate_to_lambda()
+        args = Target::Arguments.parse(*args)
       end
 
       # Handles a notification, by either placing it on the queue or calling it now
-      # TODO this needs a-fixin'
       def notify(notification)
         if AngryMob::Target::Notify === notification
-          if notification.later?
-            delayed_targets << notification
-          else
-            notification.call
-          end
+          notifications << notification
         elsif Proc === notification
           notification[mob]
         end
       end
 
-      def schedule_delayed_call(call)
-        delayed_targets << call
+      def schedule_notification(call)
+        notifications << call
       end
 
     end

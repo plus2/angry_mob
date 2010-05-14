@@ -1,20 +1,18 @@
 class AngryMob
   class Target
     class Notify
+      attr_reader :target, :args, :actions
+      def nickname; @target end
+
       def initialize(act)
         @act = act
 
         @target = nil
-        @target_args = nil
+        @args = AngryHash.new
 
-        @when   = :later
         @actions = []
 
         @backtrace = caller
-      end
-
-      def later?
-        @when == :later
       end
 
       def inject_actions(args)
@@ -22,7 +20,8 @@ class AngryMob
       end
 
       def call(mob)
-        args = Arguments.parse(@target_args)
+        raise "not used anymore"
+        args = Arguments.parse(@args)
         inject_actions(args)
         
         # localise to save into closure
@@ -36,14 +35,15 @@ class AngryMob
 
       def method_missing(method,*args,&blk)
         if ! @target
-          @target = method
-          @target_args = args
+          @target = method.to_s
+          @args = AngryHash.__convert_without_dup( args.first ) if args.first
+        end
 
-        elsif method == :later || method == :now
-          @when = method
+        if method == :now
+          raise "notify.now is no longer supported"
 
         else
-          @actions << method
+          @actions << method.to_s
         end
 
         return self
