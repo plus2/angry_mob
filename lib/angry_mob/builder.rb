@@ -59,6 +59,10 @@ class AngryMob
       acts[name.to_sym] = [blk,definition_file.dup]
     end
 
+    def finalise(*act_names, &blk)
+      act_names.norm.each {|a| act("finalise/#{a}",&blk)}
+    end
+
     # A `setup_node` block allows the mob to set defaults, load resource locators and anything else you like.
     def setup_node(&blk)
       node_setup_blocks << blk
