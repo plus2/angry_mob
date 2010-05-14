@@ -3,8 +3,6 @@ require 'tsort'
 
 class AngryMob
   class Builder
-    autoload :Act    , "angry_mob/builder/act"
-    
     include Log
 
     def self.from_file(path)

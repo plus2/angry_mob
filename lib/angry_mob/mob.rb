@@ -5,7 +5,7 @@ class AngryMob
 
     def initialize
       @target_mother = Target::Mother.new(self)
-      @act_scheduler = ActScheduler.new(self)
+      @act_scheduler = Act::Scheduler.new(self)
     end
 
     # delegate to the curren ui
@@ -58,7 +58,6 @@ class AngryMob
     # runs acts and then delayed targets
     def run!
       act_scheduler.run!
-      target_scheduler.run!
     end
 
     # building
