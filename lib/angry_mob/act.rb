@@ -78,13 +78,13 @@ class AngryMob
     end
 
     def notifications
-      mob.target_scheduler
+      mob.notifier
     end
     
     # directly schedule a call on the delayed list
     def later
       n = Target::Notify.new(self)
-      mob.target_scheduler.schedule_notification n
+      mob.notifier.schedule_notification n
       n
     end
 

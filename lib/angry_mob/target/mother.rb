@@ -12,12 +12,11 @@ class AngryMob
       end
 
       def pose_as(nickname,nickname_to_pose_as)
-        raise "not impl"
-        nickname = nickname.to_s
+        nickname            = nickname.to_s
         nickname_to_pose_as = nickname_to_pose_as.to_s
 
-        posing_class = target_classes[nickname] || raise(TargetError, "posing class '#{nickname}' doesn't exist!")
-        old_class = target_classes[nickname_to_pose_as]
+        posing_class = target_classes[nickname           ] || raise(TargetError, "posing class '#{nickname}' doesn't exist!")
+        old_class    = target_classes[nickname_to_pose_as]
 
         target_classes[nickname_to_pose_as] = posing_class
 

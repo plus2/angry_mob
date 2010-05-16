@@ -3,7 +3,6 @@ require "angry_mob/target/tracking"
 class AngryMob
   class TargetError < StandardError; end
   class Target
-    autoload :Scheduler, 'angry_mob/target/scheduler'
     autoload :Mother  , 'angry_mob/target/mother'
     autoload :Call    , 'angry_mob/target/call'
     autoload :Defaults, "angry_mob/target/defaults"
@@ -192,7 +191,7 @@ class AngryMob
     # Called when the state has changed.
     # Very simply delegates notification to the target scheduler
     def notify
-      mob.target_scheduler.notify( args.notify ) if args.notify
+      mob.notifier.notify( args.notify ) if args.notify
     end
 
     # Give the target itself a neat place to react to changes.

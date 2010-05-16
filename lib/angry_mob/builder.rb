@@ -44,6 +44,7 @@ class AngryMob
       # post-setup
       mob.consolidate_node = @node_consolidation_block
 
+      # create and bind acts
       acts.each do |name,(blk,file)|
         Act.new(name,&blk).bind(mob,file)
       end
@@ -61,6 +62,10 @@ class AngryMob
 
     def finalise(*act_names, &blk)
       act_names.norm.each {|a| act("finalise/#{a}",&blk)}
+    end
+
+    def notifications_for(name,&blk)
+      act("notifications_for/#{name}") { notifications.for(name, :context => self, &blk) }
     end
 
     # A `setup_node` block allows the mob to set defaults, load resource locators and anything else you like.

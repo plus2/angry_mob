@@ -75,11 +75,22 @@ class AngryMob
       end
 
       def finalise_acts!
-        to_finalise = acted.map {|name| "finalise/#{name}"} & acts.keys
-        ui.info "running acts finalisers #{to_finalise.inspect}"
+        to_notify = acted.map {|name| "notifications_for/#{name}"} & acts.keys
 
-        start_iterating!(to_finalise)
-        each_act {|act| act_now(act)}
+        unless to_notify.empty?
+          ui.info "running notifiers #{to_notify.inspect}"
+
+          start_iterating!(to_notify)
+          each_act {|act| act_now(act)}
+        end
+
+        to_finalise = acted.map {|name| "finalise/#{name}"} & acts.keys
+        unless to_finalise.empty?
+          ui.info "running acts finalisers #{to_finalise.inspect}"
+
+          start_iterating!(to_finalise)
+          each_act {|act| act_now(act)}
+        end
       end
 
       def act_now(act)

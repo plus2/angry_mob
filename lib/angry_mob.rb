@@ -14,6 +14,8 @@ class AngryMob
   autoload :SingletonTarget, 'angry_mob/singleton_target'
   autoload :Action         , 'angry_mob/action'
 
+  autoload :Notifier       , 'angry_mob/notifier'
+
   autoload :Act            , 'angry_mob/act'
 
   autoload :Log            , 'angry_mob/log'
