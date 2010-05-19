@@ -4,25 +4,39 @@ class AngryHash < Hash
     super(__convert(other))
   end
 
-  alias_method :regular_writer, :[]= unless method_defined?(:regular_writer)
-  alias_method :regular_reader, :[] unless method_defined?(:regular_reader)
+  alias_method :regular_writer, :[]=    unless method_defined?(:regular_writer)
+  alias_method :regular_reader, :[]     unless method_defined?(:regular_reader)
   alias_method :regular_update, :update unless method_defined?(:regular_update)
 
   def []=(key, value)
-    regular_writer(__convert_key(key), AngryHash.__convert_value(value))
+    regular_writer(__convert_key(key), self.class.__convert_value_without_dup(value))
   end
+
   def [](key)
     regular_reader(__convert_key(key))
   end
 
-  def update(other_hash)
-    other_hash.each_pair { |key, value| self[key] = value }
+  def dup_and_store(key,value)
+    regular_writer(__convert_key(key), self.class.__convert_value(value))
+  end
+
+  alias_method :regular_merge, :merge unless method_defined?(:regular_merge)
+  def merge(hash)
+    regular_merge(self.class.__convert_without_dup(hash))
+  end
+
+  def merge!(other_hash)
+    other_hash.each_pair { |key, value| dup_and_store(key,value) }
     self
   end
-  alias_method :merge!, :update
+  alias_method :update, :merge!
+
+  def dup
+    self.class[ self ]
+  end
 
   def deep_merge(other_hash)
-    self.merge(other_hash) do |key, oldval, newval|
+    self.regular_merge(other_hash) do |key, oldval, newval|
       oldval = AngryHash.__convert_value(oldval)
       newval = AngryHash.__convert_value(newval)
 
@@ -32,11 +46,20 @@ class AngryHash < Hash
 
   def deep_merge!(other_hash)
     replace(deep_merge(other_hash))
+    self
+  end
+  alias_method :deep_update, :deep_merge!
+
+  def reverse_deep_merge(other_hash)
+    self.class.__convert_value(other_hash).deep_merge(self)
   end
 
   def reverse_deep_merge!(other_hash)
-    replace(self.class.__convert_value(other_hash).deep_merge(self))
+    replace(reverse_deep_merge(other_hash))
+    self
   end
+  alias_method :reverse_deep_update, :reverse_deep_merge!
+
 
 
   def key?(key)
@@ -93,13 +116,14 @@ class AngryHash < Hash
 
     case method_s[-1]
     when ?=
+      #regular_writer(key,args.first)
       self[ key ] = args.first
 
     when ??
       !! self[key]
 
     when ?!
-      self[key] = AngryHash.new if !self.key?(key)
+      self[key] = AngryHash.new unless self.key?(key)
       self[key]
 
     else
@@ -114,24 +138,79 @@ class AngryHash < Hash
     Symbol === key ? key.to_s : key
   end
 
-  def self.__convert(hash)
-    hash.inject(AngryHash.new) do |hash,(k,v)|
-      hash[__convert_key(k)] = __convert_value(v)
-      hash
+
+  # non-duplicating convert
+  def self.__convert_without_dup(hash)
+    hash.inject(AngryHash.new) do |newhash,(k,v)|
+      newhash[__convert_key(k)] = __convert_value_without_dup(v)
+      newhash
     end
   end
 
-  def self.__convert_value(v)
+  def self.__convert_value_without_dup(v)
+    v = v.to_hash if v.respond_to?(:to_hash)
+
+    case v
+    when AngryHash
+      v
+    when Hash
+      __convert_without_dup(v)
+    when Array
+      v.map {|vv| __convert_value_without_dup(vv)}
+    else
+      v
+    end
+  end
+
+
+  # duplicating convert
+  def self.__convert(hash,cycle_watch={})
+    new_hash = hash.inject(AngryHash.new) do |hash,(k,v)|
+      hash.regular_writer( __convert_key(k), __convert_value(v,cycle_watch) )
+      hash
+    end
+
+    #puts "re-extend? #{AngryHash === hash} #{hash.__extending_modules.inspect if (AngryHash === hash)}"
+    #if AngryHash === hash && hash.__extended?
+      #puts "rex"
+      #hash.__extending_modules.each {|mod| puts "rexmod=#{mod}"; new_hash.extend(mod)}
+    #end
+
+    new_hash
+  end
+
+  #def __extending_modules
+    #@extending_modules ||= []
+  #end
+  #def __extended?
+    #!__extending_modules.empty?
+  #end
+  #def extend(mod)
+    #puts "extending with #{mod}"
+    #__extending_modules << mod
+    #puts "extending mods: #{__extending_modules.inspect}"
+    #super
+  #end
+  
+
+
+  def self.__convert_value(v,cycle_watch={})
+    return if cycle_watch.key?(v.__id__)
+
+    original_v = v
     v = v.to_hash if v.respond_to?(:to_hash)
 
     case v
     when Hash
-      __convert(v)
+      cycle_watch[original_v.__id__] = true
+      __convert(v,cycle_watch)
     when Array
-      v.map {|v| __convert_value(v)}
+      cycle_watch[original_v.__id__] = true
+      v.map {|vv| __convert_value(vv,cycle_watch)}
     when Fixnum,Symbol,NilClass,TrueClass,FalseClass,Float
       v
     else
+      cycle_watch[original_v.__id__] = true
       v.dup
     end
   end

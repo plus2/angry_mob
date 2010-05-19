@@ -5,17 +5,18 @@
 
 Gem::Specification.new do |s|
   s.name = %q{angry_hash}
-  s.version = "0.0.2"
+  s.version = "0.0.4"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Lachie Cox"]
-  s.date = %q{2010-04-27}
+  s.date = %q{2010-04-29}
   s.description = %q{A stabler mash with different emphases. Used in plus2 projects AngryMob and Igor.}
   s.email = %q{lachie@plus2.com.au}
   s.files = [
     ".gitignore",
      "Rakefile",
      "VERSION",
+     "angry_hash.gemspec",
      "examples/creation_eg.rb",
      "examples/eg_helper.rb",
      "lib/angry_hash.rb",
@@ -26,10 +27,6 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.3.6}
   s.summary = %q{A stabler mash with different emphases.}
-  s.test_files = [
-    "examples/creation_eg.rb",
-     "examples/eg_helper.rb"
-  ]
 
   if s.respond_to? :specification_version then
     current_version = Gem::Specification::CURRENT_SPECIFICATION_VERSION
