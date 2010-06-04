@@ -1,4 +1,7 @@
 class AngryHash < Hash
+  def self.shooper
+    "mooper"
+  end
 
   def self.[](other)
     super(__convert(other))
@@ -164,54 +167,38 @@ class AngryHash < Hash
 
 
   # duplicating convert
-  def self.__convert(hash,cycle_watch={})
+  def self.__convert(hash,cycle_watch=[])
     new_hash = hash.inject(AngryHash.new) do |hash,(k,v)|
       hash.regular_writer( __convert_key(k), __convert_value(v,cycle_watch) )
       hash
     end
 
-    #puts "re-extend? #{AngryHash === hash} #{hash.__extending_modules.inspect if (AngryHash === hash)}"
-    #if AngryHash === hash && hash.__extended?
-      #puts "rex"
-      #hash.__extending_modules.each {|mod| puts "rexmod=#{mod}"; new_hash.extend(mod)}
-    #end
-
     new_hash
   end
 
-  #def __extending_modules
-    #@extending_modules ||= []
-  #end
-  #def __extended?
-    #!__extending_modules.empty?
-  #end
-  #def extend(mod)
-    #puts "extending with #{mod}"
-    #__extending_modules << mod
-    #puts "extending mods: #{__extending_modules.inspect}"
-    #super
-  #end
-  
+  def self.__convert_value(v,cycle_watch=[])
+    id = v.__id__
 
+    return if cycle_watch.include? id
 
-  def self.__convert_value(v,cycle_watch={})
-    return if cycle_watch.key?(v.__id__)
+    begin
+      cycle_watch << id
 
-    original_v = v
-    v = v.to_hash if v.respond_to?(:to_hash)
+      original_v = v
+      v = v.to_hash if v.respond_to?(:to_hash)
 
-    case v
-    when Hash
-      cycle_watch[original_v.__id__] = true
-      __convert(v,cycle_watch)
-    when Array
-      cycle_watch[original_v.__id__] = true
-      v.map {|vv| __convert_value(vv,cycle_watch)}
-    when Fixnum,Symbol,NilClass,TrueClass,FalseClass,Float
-      v
-    else
-      cycle_watch[original_v.__id__] = true
-      v.dup
+      case v
+      when Hash
+        __convert(v,cycle_watch)
+      when Array
+        v.map {|vv| __convert_value(vv,cycle_watch)}
+      when Fixnum,Symbol,NilClass,TrueClass,FalseClass,Float
+        v
+      else
+        v.dup
+      end
+    ensure
+      cycle_watch.pop
     end
   end
   
