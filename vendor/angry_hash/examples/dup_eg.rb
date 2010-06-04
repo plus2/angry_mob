@@ -66,3 +66,23 @@ eg 'duping copies symbols' do
   Assert( ! ah2.database.isg_sandbox_v5.server.nil? )
   Assert( ah2.database.isg_sandbox_v5.server == @original['database']['isg_sandbox_v5']['server'] )
 end
+
+module Extendo
+  def as_dag
+    dag = dup
+    dag
+  end
+end
+
+eg 'duping from ext' do
+  ah = AngryHash[ @original ]
+  ah.extend(Extendo)
+
+  ah2 = ah.as_dag
+
+  Show( AngryHash.shooper )
+  Show( ah.__id__ )
+  Show( ah2.__id__ )
+  
+  Show( ah2 )
+end
