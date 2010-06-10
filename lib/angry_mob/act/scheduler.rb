@@ -2,7 +2,7 @@ class AngryMob
   class Act
     class Scheduler
       attr_writer :node
-      attr_reader :acted
+      attr_reader :acted, :mob
 
       def initialize(mob)
         @mob = mob
@@ -36,7 +36,13 @@ class AngryMob
 
       def each_act
         while act_name = next_act
-          act = acts[act_name] || raise(AngryMob::MobError,"no act named '#{act_name}'")
+          act = acts[act_name]
+
+          unless act
+            act_missing!(act_name)
+            next
+          end
+          
           yield act
         end
         @iterating = false
@@ -93,21 +99,34 @@ class AngryMob
         end
       end
 
-      def act_now(act)
-        unless AngryMob::Act === act
-          act = acts[act]
+      def raise_on_missing_act?
+        !( FalseClass === mob.node.raise_on_missing_act )
+      end
+
+      def act_missing!(name)
+        raise(AngryMob::MobError, "no act named '#{name}'") if raise_on_missing_act?
+      end
+
+      def act_now(act_name)
+        if AngryMob::Act === act_name
+          act = act_name
+          act_name = act.name
+        else
+          act = acts[act_name]
         end
 
-        raise(AngryMob::MobError, "no act named '#{act}'") unless act
-
-        name = act.name.to_s
-
-        if acted.include?(name)
-          ui.skipped! "(not re-running act #{name} - already run)"
+        unless act
+          act_missing!(act_name) 
           return
         end
 
-        acted << name
+
+        if acted.include?(act_name)
+          ui.skipped! "(not re-running act #{act_name} - already run)"
+          return
+        end
+
+        acted << act_name
 
         act.run!
       end

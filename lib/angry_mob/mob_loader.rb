@@ -38,7 +38,7 @@ class AngryMob
 
         mob_root = path
 
-        loader = path+'load.rb'
+        loader = path+'load_mob.rb'
 
         if loader.exist?
           instance_eval(loader.read,loader.to_s)

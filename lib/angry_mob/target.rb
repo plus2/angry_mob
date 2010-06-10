@@ -9,6 +9,8 @@ class AngryMob
     autoload :Notify  , "angry_mob/target/notify"
     autoload :Arguments, "angry_mob/target/arguments"
 
+    autoload :DefaultResourceLocator, "angry_mob/target/default_resource_locator"
+
     include Tracking
 
     # Ok lets define some class level helpings.

@@ -50,6 +50,8 @@ class AngryMob
       node_defaults[node,defaults]    if node_defaults
       consolidate_node[node,defaults] if consolidate_node
 
+      node.setup_finished!
+
       ui.good "setup complete"
       
       self

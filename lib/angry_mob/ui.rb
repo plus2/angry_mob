@@ -70,6 +70,8 @@ class AngryMob
     end
 
     def say(message="", colour=nil, force_new_line=(message.to_s !~ /( |\t)$/))
+      return if self.class.silence?
+
       message  = message.to_s
       message  = colourise(message, colour) if colour
 
@@ -86,7 +88,7 @@ class AngryMob
     end
 
     def newline
-      $stdout.puts "\n"
+      $stdout.puts "\n" unless self.class.silence?
     end
 
     def spaces
@@ -100,6 +102,22 @@ class AngryMob
     def outdent
       @level -= 1
       @level = @min_level if @level < @min_level
+    end
+
+    def self.silence(&block)
+      old_silence,@silence = @silence,true
+      yield
+    ensure
+      @silence = old_silence
+    end
+    def self.silence?
+      @silence
+    end
+    def silence(&block)
+      self.class.silence(&block)
+    end
+    def silence(&block)
+      self.class.silence(&block)
     end
 
     def info(message)
@@ -131,11 +149,16 @@ class AngryMob
       say spaces+message, :gray if debug?
     end
 
+    def benchmark?
+      @benchmark ||= !(FalseClass === @options[:benchmark])
+    end
+
     def warn(message)
       say spaces+message, :yellow
     end
 
     def push(message,opts={},&block)
+      start_time = Time.now
       start! message
       subui = self.class.new(@options, @level+1,stack)
 
@@ -155,24 +178,32 @@ class AngryMob
 
       say spaces+'}', :yellow, false
 
+      colour = nil
+
       case subui.result
       when :ok
+        colour = :green
         say " ✓ #{message}", :green, false
         say " (#{subui.message})", :green, false if subui.message
 
       when :skip
+        colour = :blue
         say " ● #{message}", :blue, false
         say " (#{subui.message})", :blue, false if subui.message
 
       when Exception
+        colour = :red
         say " ☠ #{message}", :red, false
         say " (#{subui.message})", :red, false if subui.message
         newline
         raise subui.result
 
       else
+        colour = :gray
         say " #{message}", :gray, false
       end
+
+      say(" (#{Time.now-start_time}s)", colour, false) if benchmark?
 
       newline
       newline

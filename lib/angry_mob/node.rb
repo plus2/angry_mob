@@ -12,10 +12,15 @@ class AngryMob
       attributes.reverse_deep_merge!(attrs)
     end
 
+    def setup_finished!
+      self.resource_locator ||= AngryMob::Target::DefaultResourceLocator.new
+    end
+
     def consolidate!
       node = self
       __consolidate_hash(attributes,{})
     end
+
 
     def __consolidate_hash(hash,seen)
 

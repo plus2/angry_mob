@@ -44,6 +44,10 @@ module ArgvExtension
     opt 'act'
   end
 
+  def allow_missing_act?
+    flag? 'allow-missing-act'
+  end
+
   def defines
     defines = []
     each_with_index {|s,i| defines << self[i+1] if s == '-D'}
@@ -64,7 +68,7 @@ end
 ARGV.extend ArgvExtension
 
 
-ui = AngryMob::UI.new(:debug => false)
+ui = AngryMob::UI.new(:debug => true)
 
 
 # TODO - merge in json snippets from the cmdline
@@ -85,6 +89,11 @@ if act = ARGV.act
   attributes.acts = [ act ]
 end
 
+
+if ARGV.allow_missing_act?
+  attributes.raise_on_missing_act = false
+end
+
 ARGV.defines.each {|define| attributes.merge_string define}
 
 attributes.dry_run = ARGV.dry_run?
@@ -103,4 +112,5 @@ begin
 rescue
 	puts "\nerror [#{$!.class}] #{$!}"
 	$!.backtrace.each {|b| puts "  #{b}"}
+  exit(1)
 end
