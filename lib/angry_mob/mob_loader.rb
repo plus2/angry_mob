@@ -102,5 +102,12 @@ class AngryMob
       end
     end
 
+    def load_act_file(path)
+      raise "act file at path #{path} didn't exist" unless path.exist?
+      ui.log "loading acts from #{path}"
+
+      @builder.from_file(path)
+    end
+
   end
 end
