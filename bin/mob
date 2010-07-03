@@ -3,7 +3,6 @@
 require 'pathname'
 @root = Pathname(__FILE__).dirname.parent.expand_path
 
-
 %w{json thor angry_hash}.each do |lib|
   root = @root+'vendor'+lib
   $: << (root+'lib')
@@ -14,103 +13,74 @@ require 'thor'
 $:.unshift @root+'lib'
 require 'angry_mob'
 
-module ArgvExtension
-  def opt name
-    self[ index("--#{name}")+1 ]
-  rescue
-    nil
+class MobCLI < Thor
+
+  default_task 'riot'
+  desc 'riot', 'riot the mob'
+  method_option :nodename, :type => :string, :required => true
+  method_option :json_file, :type => :string, :required => true
+  method_option :act, :type => :string, :required => true
+
+  method_option :debug            , :type => :boolean, :default => false
+  method_option :dry_run          , :type => :boolean, :default => false
+  method_option :allow_missing_act, :type => :boolean, :default => false
+
+  method_option :mobs, :type => :array, :default => []
+
+  def riot
+    ui = AngryMob::UI.new(:debug => options.debug?)
+
+    attributes = build_attributes
+
+    begin
+
+      # XXX not threadsafe, but what is?
+      AngryMob::Mob.ui = ui
+      mob_loader = AngryMob::MobLoader.new
+      
+      options.mobs.each {|mob_path| mob_loader.add_mob(mob_path)}
+
+      mob = mob_loader.to_mob
+      mob.riot!( nodename, attributes )
+
+    rescue
+      puts "\nerror [#{$!.class}] #{$!}"
+      $!.backtrace.each {|b| puts "  #{b}"}
+      exit(1)
+    end
   end
 
-  def shopt name
-    self[ index("-#{name}")+1 ]
-  rescue
-    nil
+  protected
+  def build_attributes
+    attributes = load_attributes
+
+    attributes.acts = [ options.act ]
+
+    if options.allow_missing_act?
+      attributes.raise_on_missing_act = false
+    end
+
+    attributes.dry_run = ARGV.dry_run?
+
+    attributes
   end
 
-  def flag? name
-    !! index("--#{name}")
-  end
+  def load_attributes
+    return AngryHash.new unless options.json_file?
+    
+    if options.json_file[/^https?:/]
+      require 'net/http'
+      json = Net::HTTP.get(options.json_file)
+    else
+      json = options.json_file.pathname.expand_path.read
+    end
 
+    require 'json/pure'
+    attributes = JSON.parse( json )
 
-  def nodename
-    opt 'nodename'
-  end
+    AngryHash[attributes || {}]
+  end    
 
-  def dry_run?
-    flag? 'dry-run'
-  end
-
-  def act
-    opt 'act'
-  end
-
-  def allow_missing_act?
-    flag? 'allow-missing-act'
-  end
-
-  def defines
-    defines = []
-    each_with_index {|s,i| defines << self[i+1] if s == '-D'}
-    defines
-  end
-
-  def json_file
-    opt 'json-file'
-  end
-
-  def mobs
-    mobs = []
-    each_with_index {|s,i| mobs << self[i+1] if s == '--mob'}
-    mobs
-  end
 end
 
-ARGV.extend ArgvExtension
-
-
-ui = AngryMob::UI.new(:debug => true)
-
-
-# TODO - merge in json snippets from the cmdline
-
-attributes ||= {}
-
-if json_file = ARGV.json_file
-  require 'json/pure'
-  json_file = json_file.pathname.expand_path
-  attributes = JSON.parse( json_file.read )
-end
-
-attributes = AngryHash[attributes]
-
-nodename = ARGV.nodename || `hostname -s`.chomp
-
-if act = ARGV.act
-  attributes.acts = [ act ]
-end
-
-
-if ARGV.allow_missing_act?
-  attributes.raise_on_missing_act = false
-end
-
-ARGV.defines.each {|define| attributes.merge_string define}
-
-attributes.dry_run = ARGV.dry_run?
-
-begin
-
-  # XXX not threadsafe, but what is?
-  AngryMob::Mob.ui = ui
-  mob_loader = AngryMob::MobLoader.new
-  
-  ARGV.mobs.each {|mob_path| mob_loader.add_mob(mob_path)}
-
-  mob = mob_loader.to_mob
-  mob.riot!( nodename, attributes )
-
-rescue
-	puts "\nerror [#{$!.class}] #{$!}"
-	$!.backtrace.each {|b| puts "  #{b}"}
-  exit(1)
-end
+MobCLI.start
