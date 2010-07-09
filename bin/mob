@@ -38,10 +38,10 @@ class MobCLI < Thor
       AngryMob::Mob.ui = ui
       mob_loader = AngryMob::MobLoader.new
       
-      options.mobs.each {|mob_path| mob_loader.add_mob(mob_path)}
+      options.mobs.each {|mob_path| mob_loader.add_mob(mob_path.tapp)}
 
       mob = mob_loader.to_mob
-      mob.riot!( nodename, attributes )
+      mob.riot!( options.nodename, attributes )
 
     rescue
       puts "\nerror [#{$!.class}] #{$!}"
@@ -60,7 +60,7 @@ class MobCLI < Thor
       attributes.raise_on_missing_act = false
     end
 
-    attributes.dry_run = ARGV.dry_run?
+    attributes.dry_run = options.dry_run?
 
     attributes
   end
@@ -70,7 +70,8 @@ class MobCLI < Thor
     
     if options.json_file[/^https?:/]
       require 'net/http'
-      json = Net::HTTP.get(options.json_file)
+      require 'uri'
+      json = Net::HTTP.get(URI.parse(options.json_file))
     else
       json = options.json_file.pathname.expand_path.read
     end
