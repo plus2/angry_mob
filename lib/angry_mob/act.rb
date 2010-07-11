@@ -5,13 +5,16 @@ class AngryMob
 
     attr_reader :mob, :name, :definition_file
 
-    def initialize(name,&blk)
+    def initialize(name,multi,&blk)
       @name = name
+      @multi = multi
       @blk = blk
     end
 
     def ui; mob.ui end
     def log(message); mob.ui.log message end
+
+    def multi?; !!@multi end
 
     # Binds the act to the mob and the file from which it came.
     def bind(mob,file)
@@ -22,19 +25,19 @@ class AngryMob
     end
 
     def self.synthesise(mob,name,&blk)
-      act = new(name,&blk)
+      act = new(name,true,&blk)
       act.bind(mob,"name")
       act.run!
     end
 
     #### Compilation
 
-    # Executes the block via `instance_eval`
-    def run!
+    # Executes the block via `instance_exec`
+    def run!(*arguments)
       ui.push("act '#{name}'", :bubble => true) do
         @running = true
 
-        instance_eval &@blk
+        instance_exec *arguments, &@blk
 
         @running = false
       end
@@ -61,10 +64,10 @@ class AngryMob
       call.target
     end
 
-    def in_sub_act(&blk)
-      sub_act = self.class.new("#{name}-sub-act",&blk)
+    def in_sub_act(*args,&blk)
+      sub_act = self.class.new("#{name}-sub-act",true,&blk)
       sub_act.bind(@mob,@definition_file)
-      sub_act.run!
+      sub_act.run!(*args)
     end
 
     #### Definition helpers
@@ -92,8 +95,8 @@ class AngryMob
       mob.node
     end
 
-    def act_now *act_name
-      act_name.norm.each {|act_name| mob.act_scheduler.act_now(act_name)}
+    def act_now act_name, *args
+      mob.act_scheduler.act_now(act_name,*args)
     end
 
     def schedule_act act_name

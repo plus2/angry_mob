@@ -45,8 +45,8 @@ class AngryMob
       mob.consolidate_node = @node_consolidation_block
 
       # create and bind acts
-      acts.each do |name,(blk,file)|
-        Act.new(name,&blk).bind(mob,file)
+      acts.each do |name,(blk,file,multi)|
+        Act.new(name,multi,&blk).bind(mob,file)
       end
 
       mob
@@ -57,7 +57,12 @@ class AngryMob
     # Defines an `act` block
     def act(name, definition_file=nil, &blk)
       definition_file ||= file
-      acts[name.to_sym] = [blk,definition_file.dup]
+      acts[name.to_sym] = [blk,definition_file.dup,false]
+    end
+
+    def multi_act(name, definition_file=nil, &blk)
+      definition_file ||= file
+      acts[name.to_sym] = [blk,definition_file.dup,true]
     end
 
     def finalise(*act_names, &blk)

@@ -107,7 +107,7 @@ class AngryMob
         raise(AngryMob::MobError, "no act named '#{name}'") if raise_on_missing_act?
       end
 
-      def act_now(act_name)
+      def act_now(act_name,*arguments)
         if AngryMob::Act === act_name
           act = act_name
           act_name = act.name
@@ -120,15 +120,14 @@ class AngryMob
           return
         end
 
-
-        if acted.include?(act_name)
+        if !act.multi? && acted.include?(act_name)
           ui.skipped! "(not re-running act #{act_name} - already run)"
           return
         end
 
         acted << act_name
 
-        act.run!
+        act.run!(*arguments)
       end
     end
   end
