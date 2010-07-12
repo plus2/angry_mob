@@ -90,6 +90,8 @@ class AngryMob
           each_act {|act| act_now(act)}
         end
 
+        ui.log "finalisation phase"
+
         to_finalise = acted.map {|name| "finalise/#{name}"} & acts.keys
         unless to_finalise.empty?
           ui.info "running acts finalisers #{to_finalise.inspect}"

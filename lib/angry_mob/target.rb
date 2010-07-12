@@ -220,7 +220,8 @@ class AngryMob
     # targets can customise this
     # the default is the default_object argument. 
     # See #initialize for how the default_option argument is set.
-    def default_object
+    def default_object(clear=false)
+      @default_object = nil if clear
       @default_object ||= default_object!
     end
 
