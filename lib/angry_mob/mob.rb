@@ -43,7 +43,7 @@ class AngryMob
 
     # bind selected targets to the node
     def setup!
-      ui.log "setting up node"
+      ui.task "setting up node"
       defaults = AngryHash.new
 
       setup_node[node,defaults]       if setup_node

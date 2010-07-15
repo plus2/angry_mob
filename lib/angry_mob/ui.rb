@@ -134,7 +134,11 @@ class AngryMob
     end
 
     def log(message)
-      say spaces+message, :white
+      say spaces+indent_string(message, @level+1), :white
+    end
+
+    def point(message)
+      say spaces+"● #{message}", :blue
     end
 
     def error(message)
@@ -233,6 +237,11 @@ class AngryMob
     def skipped!(message)
       @result = :skip
       @message = message
+    end
+
+    protected
+    def indent_string(string,level=@level)
+      string.chomp.gsub(/\n/,"\n#{'  ' * level}")
     end
   end
 end

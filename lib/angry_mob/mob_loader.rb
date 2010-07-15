@@ -22,6 +22,8 @@ class AngryMob
       path = Pathname(path).expand_path
       name ||= path.basename.to_s
 
+      ui.log "added mob #{name} from #{path}"
+
       mobs[name] ||= path
     end
 

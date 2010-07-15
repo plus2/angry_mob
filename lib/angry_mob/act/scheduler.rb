@@ -29,6 +29,7 @@ class AngryMob
       end
 
       def run!
+        ui.task "running acts #{act_names.inspect}"
         each_act {|act| act_now(act)}
         ui.good "finished running acts"
         finalise_acts!
@@ -36,6 +37,8 @@ class AngryMob
 
       def each_act
         while act_name = next_act
+          ui.debug "acting out #{next_act}"
+
           act = acts[act_name]
 
           unless act
