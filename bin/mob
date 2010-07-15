@@ -17,9 +17,11 @@ class MobCLI < Thor
 
   default_task 'riot'
   desc 'riot', 'riot the mob'
-  method_option :nodename, :type => :string, :required => true
+  method_option :nodename , :type => :string, :required => true
   method_option :json_file, :type => :string, :required => true
-  method_option :act, :type => :string, :required => true
+  method_option :act      , :type => :string, :required => true
+
+  method_option :require  , :type => :string, :alias => '-r'
 
   method_option :debug            , :type => :boolean, :default => false
   method_option :dry_run          , :type => :boolean, :default => false
@@ -28,17 +30,22 @@ class MobCLI < Thor
   method_option :mobs, :type => :array, :default => []
 
   def riot
+    if options.require?
+      eval_required_file(options.require)
+    end
+
     ui = AngryMob::UI.new(:debug => options.debug?)
 
     attributes = build_attributes
 
-    begin
+    #$stdout.flush
+    #exit!
 
-      # XXX not threadsafe, but what is?
-      AngryMob::Mob.ui = ui
+    begin
+      AngryMob::Mob.ui = ui   # XXX not threadsafe, but what is?
       mob_loader = AngryMob::MobLoader.new
       
-      options.mobs.each {|mob_path| mob_loader.add_mob(mob_path.tapp)}
+      options.mobs.each {|mob_path| mob_loader.add_mob(mob_path)}
 
       mob = mob_loader.to_mob
       mob.riot!( options.nodename, attributes )
@@ -80,8 +87,11 @@ class MobCLI < Thor
     attributes = JSON.parse( json )
 
     AngryHash[attributes || {}]
-  end    
+  end
 
+  def eval_required_file(file)
+      instance_eval( Pathname(file).read )
+  end    
 end
 
 MobCLI.start
