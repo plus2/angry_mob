@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 
+
 require 'pathname'
 @root = Pathname(__FILE__).dirname.parent.expand_path
 
@@ -21,7 +22,7 @@ class MobCLI < Thor
   method_option :json_file, :type => :string, :required => true
   method_option :act      , :type => :string, :required => true
 
-  method_option :pre      , :type => :string
+  method_option :hooks      , :type => :string
 
   method_option :debug            , :type => :boolean, :default => false
   method_option :dry_run          , :type => :boolean, :default => false
@@ -30,16 +31,19 @@ class MobCLI < Thor
   method_option :mobs, :type => :array, :default => []
 
   def riot
-    if options.pre?
-      eval_pre_file(options.pre)
-    end
+    puts "rioting"
+    load_hooks(options.hooks.tapp)
+
+    @hooks.pre
 
     ui = AngryMob::UI.new(:debug => options.debug?)
 
     attributes = build_attributes
 
-    #$stdout.flush
-    #exit!
+    @hooks.attrs( attributes )
+
+    $stdout.flush
+    exit
 
     begin
       AngryMob::Mob.ui = ui   # XXX not threadsafe, but what is?
@@ -89,9 +93,47 @@ class MobCLI < Thor
     AngryHash[attributes || {}]
   end
 
-  def eval_pre_file(file)
-      instance_eval( Pathname(file).read )
+  def load_hooks(file)
+    @hooks = MobHooks.new( self, file )
   end    
 end
+
+
+class MobHooks
+  attr_reader :cli
+  def initialize(cli,file=nil)
+    @cli = cli
+    if file
+      @building = true
+      instance_eval( Pathname(file).read )
+      @building = false
+    end
+  end
+
+  def pre(&block)
+    if building?
+      puts "pre block"
+      pre_blocks << block
+    else
+      pre_blocks.each {|b| b.call}
+    end
+  end
+
+  def attrs( *args, &block )
+    if building?
+      puts "attr block"
+      attr_blocks << block
+    else
+      attr_blocks.each {|b| b.call(*args)}
+    end
+  end
+
+  protected
+
+  def building?; @building end
+  def pre_blocks ; @pre_blocks ||= [] end
+  def attr_blocks; @attr_blocks ||= [] end
+end
+
 
 MobCLI.start
