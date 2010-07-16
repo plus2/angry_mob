@@ -31,7 +31,6 @@ class MobCLI < Thor
   method_option :mobs, :type => :array, :default => []
 
   def riot
-    puts "rioting"
     load_hooks(options.hooks.tapp)
 
     @hooks.pre
@@ -42,8 +41,8 @@ class MobCLI < Thor
 
     @hooks.attrs( attributes )
 
-    $stdout.flush
-    exit
+    #$stdout.flush
+    #exit
 
     begin
       AngryMob::Mob.ui = ui   # XXX not threadsafe, but what is?
@@ -84,7 +83,7 @@ class MobCLI < Thor
       require 'uri'
       json = Net::HTTP.get(URI.parse(options.json_file))
     else
-      json = options.json_file.pathname.expand_path.read
+      json = Pathname(options.json_file).expand_path.read
     end
 
     require 'json/pure'
@@ -112,7 +111,6 @@ class MobHooks
 
   def pre(&block)
     if building?
-      puts "pre block"
       pre_blocks << block
     else
       pre_blocks.each {|b| b.call}
@@ -121,7 +119,6 @@ class MobHooks
 
   def attrs( *args, &block )
     if building?
-      puts "attr block"
       attr_blocks << block
     else
       attr_blocks.each {|b| b.call(*args)}
