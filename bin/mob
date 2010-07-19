@@ -30,30 +30,33 @@ class MobCLI < Thor
 
   method_option :mobs, :type => :array, :default => []
 
+  attr_reader :config
   def riot
-    load_hooks(options.hooks.tapp)
-
-    @hooks.pre
-
-    ui = AngryMob::UI.new(:debug => options.debug?)
-
-    attributes = build_attributes
-
-    @hooks.attrs( attributes )
-
-    #$stdout.flush
-    #exit
-
     begin
+      @config = AngryHash[ options ]
+
+      load_hooks(config.hooks)
+
+      @hooks.pre
+
+      ui = AngryMob::UI.new(:debug => config.debug?)
+
+      attributes = build_attributes
+
+      @hooks.attrs( attributes )
+
       AngryMob::Mob.ui = ui   # XXX not threadsafe, but what is?
       mob_loader = AngryMob::MobLoader.new
       
-      options.mobs.each {|mob_path| mob_loader.add_mob(mob_path)}
+      config.mobs.each {|mob_path| mob_loader.add_mob(mob_path)}
 
       mob = mob_loader.to_mob
-      mob.riot!( options.nodename, attributes )
+      mob.riot!( config.nodename, attributes )
 
     rescue
+      $stdout.flush
+      $stderr.flush
+
       puts "\nerror [#{$!.class}] #{$!}"
       $!.backtrace.each {|b| puts "  #{b}"}
       exit(1)
@@ -64,26 +67,26 @@ class MobCLI < Thor
   def build_attributes
     attributes = load_attributes
 
-    attributes.acts = [ options.act ]
+    attributes.acts = [ config.act ]
 
-    if options.allow_missing_act?
+    if config.allow_missing_act?
       attributes.raise_on_missing_act = false
     end
 
-    attributes.dry_run = options.dry_run?
+    attributes.dry_run = config.dry_run?
 
     attributes
   end
 
   def load_attributes
-    return AngryHash.new unless options.json_file?
-    
-    if options.json_file[/^https?:/]
+    return AngryHash.new unless config.json_file?
+
+    if config.json_file.to_s[/^https?:/]
       require 'net/http'
       require 'uri'
-      json = Net::HTTP.get(URI.parse(options.json_file))
+      json = Net::HTTP.get(URI.parse(config.json_file))
     else
-      json = Pathname(options.json_file).expand_path.read
+      json = Pathname(config.json_file.tapp("loading attributes from")).expand_path.read
     end
 
     require 'json/pure'
