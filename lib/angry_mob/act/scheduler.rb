@@ -37,7 +37,7 @@ class AngryMob
 
       def each_act
         while act_name = next_act
-          ui.debug "acting out #{next_act}"
+          ui.debug "acting out #{act_name}"
 
           act = acts[act_name]
 
