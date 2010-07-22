@@ -84,7 +84,9 @@ class AngryMob
       end
 
       def finalise_acts!
-        to_notify = acted.map {|name| "notifications_for/#{name}"} & acts.keys
+        # notifications only act as necessary, so its safe to run them all.
+        ui.task "running notifications"
+        to_notify = acts.keys.select {|k| k[%r{^notifications_for/}]}
 
         unless to_notify.empty?
           ui.info "running notifiers #{to_notify.inspect}"
@@ -93,7 +95,9 @@ class AngryMob
           each_act {|act| act_now(act)}
         end
 
-        ui.log "finalisation phase"
+
+        # finalisers should only run if the act of the same name has run first
+        ui.task "running finalisations"
 
         to_finalise = acted.map {|name| "finalise/#{name}"} & acts.keys
         unless to_finalise.empty?
