@@ -18,6 +18,6 @@ class Pathname
   end
 
   def ls
-    Pathname.glob('*').reject {|e| e.basename.to_s[0] == '.'}
+    Pathname.glob(self+'*').reject {|e| e.basename.to_s[0] == '.'}
   end
 end
