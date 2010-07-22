@@ -16,4 +16,8 @@ class Pathname
   def cp_to(to)
     FileUtils.cp(self,to)
   end
+
+  def ls
+    Pathname.glob('*').reject {|e| e.basename.to_s[0] == '.'}
+  end
 end
