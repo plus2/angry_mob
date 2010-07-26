@@ -13,6 +13,9 @@ class Object
   def blank?
     nil? || (respond_to?(:empty?) && empty?)
   end
+  def present?
+    ! blank?
+  end
 end # class Object
 
 class Numeric
@@ -29,6 +32,9 @@ class Numeric
   def blank?
     false
   end
+  def present?
+    true
+  end
 end # class Numeric
 
 class NilClass
@@ -42,6 +48,9 @@ class NilClass
   # @api public
   def blank?
     true
+  end
+  def present?
+    false
   end
 end # class NilClass
 
@@ -57,6 +66,9 @@ class TrueClass
   def blank?
     false
   end
+  def present?
+    true
+  end
 end # class TrueClass
 
 class FalseClass
@@ -70,6 +82,9 @@ class FalseClass
   # @api public
   def blank?
     true
+  end
+  def present?
+    false
   end
 end # class FalseClass
 
@@ -86,5 +101,8 @@ class String
   # @api public
   def blank?
     strip.empty?
+  end
+  def present?
+    ! blank?
   end
 end # class String
