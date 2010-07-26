@@ -46,7 +46,9 @@ class AngryMob
 
       # create and bind acts
       acts.each do |name,(blk,file,multi)|
-        Act.new(name,multi,&blk).bind(mob,file)
+        act = Act.new(name,multi,&blk)
+        act.extend helper_mod 
+        act.bind(mob,file)
       end
 
       mob
@@ -63,6 +65,10 @@ class AngryMob
     def multi_act(name, definition_file=nil, &blk)
       definition_file ||= file
       acts[name.to_sym] = [blk,definition_file.dup,true]
+    end
+
+    def act_helper(&blk)
+      helper_mod.module_eval(&blk)
     end
 
     def finalise(*act_names, &blk)
@@ -92,11 +98,17 @@ class AngryMob
     def node_setup_blocks
       @node_setup_blocks ||= []
     end
+
     def node_default_blocks
       @node_default_blocks ||= []
     end
+
     def acts
       @acts ||= Dictionary.new
+    end
+
+    def helper_mod
+      @helper_mod ||= Module.new
     end
 
   end
