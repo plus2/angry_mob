@@ -124,17 +124,20 @@ class AngryHash < Hash
 
     case method_s[-1]
     when ?=
-      #regular_writer(key,args.first)
+      return super unless args.size == 1
       self[ key ] = args.first
 
     when ??
+      return super unless args.empty?
       !! self[key]
 
     when ?!
+      return super unless args.empty?
       self[key] = AngryHash.new unless self.key?(key)
       self[key]
 
     else
+      return super unless args.empty?
       self[method_s]
     end
   end
