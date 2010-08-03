@@ -19,6 +19,10 @@ class AngryHash < Hash
     regular_reader(__convert_key(key))
   end
 
+  def id
+    regular_reader('id')
+  end
+
   def dup_and_store(key,value)
     regular_writer(__convert_key(key), self.class.__convert_value(value))
   end
