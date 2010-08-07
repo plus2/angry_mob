@@ -19,6 +19,8 @@ class AngryMob
     end
 
     def add_mob(path,name=nil)
+      # TODO add different kinds of mobs: path, gem, git
+
       path = Pathname(path).expand_path
       name ||= path.basename.to_s
 
