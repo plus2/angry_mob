@@ -130,5 +130,6 @@ eg 'merge with symbol key' do
 
   merged = orig.merge(:key=>"db")
 
+  Show( merged )
   Assert( merged.keys[1].is_a?(String) )
 end
