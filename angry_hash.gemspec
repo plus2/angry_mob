@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{angry_hash}
-  s.version = "0.0.5"
+  s.version = "0.1.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Lachie Cox"]
-  s.date = %q{2010-06-02}
+  s.date = %q{2010-08-07}
   s.description = %q{A stabler mash with different emphases. Used in plus2 projects AngryMob and Igor.}
   s.email = %q{lachie@plus2.com.au}
   s.files = [
@@ -19,10 +19,13 @@ Gem::Specification.new do |s|
      "angry_hash.gemspec",
      "examples/accessors_eg.rb",
      "examples/creation_eg.rb",
+     "examples/dsl.eg.rb",
      "examples/dup_eg.rb",
      "examples/eg_helper.rb",
      "examples/merge_eg.rb",
      "lib/angry_hash.rb",
+     "lib/angry_hash/dsl.rb",
+     "lib/angry_hash/extension_tracking.rb",
      "lib/angry_hash/merge_string.rb"
   ]
   s.homepage = %q{http://github.com/plus2/angry_hash}
