@@ -55,8 +55,8 @@ class AngryMob
     end
 
     # Schedules a target, adding call-location context along the way.
-    def __run_target(nickname,*args)
-      call = mob.target_mother.target_call(nickname,*args)
+    def __run_target(nickname,*args,&blk)
+      call = mob.target_mother.target_call(nickname,*args,&blk)
 
       call.merge_defaults(defaults.defaults_for(nickname))
       call.call(self)

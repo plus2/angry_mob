@@ -41,11 +41,11 @@ class AngryMob
         @key_classes ||= Hash.new {|h,k| h[k] = []}
       end
 
-      def target_call(nickname, *args)
+      def target_call(nickname, *args, &blk)
         raise(MobError, "no target nicknamed '#{nickname}'\n#{target_classes.keys.inspect}") unless target_classes.key?(nickname.to_s)
         klass = target_classes[nickname.to_s]
 
-        args = Arguments.parse(args)
+        args = Arguments.parse(args,&blk)
 
         if key = Target::Call.instance_key(klass,args)
           if call = target_instances[key]

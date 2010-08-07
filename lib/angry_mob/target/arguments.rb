@@ -3,12 +3,12 @@ class AngryMob
     class Arguments
       attr_reader :args, :actions
 
-      def initialize(*args)
-        @args = extract_args(args)
+      def initialize(*args,&blk)
+        @args = extract_args(args,&blk)
         extract_actions!
       end
 
-      def self.parse(input)
+      def self.parse(input,&blk)
         case input
         when Arguments
           input
@@ -16,10 +16,10 @@ class AngryMob
           if input.size == 1 && Arguments === input.first
             input.first
           else
-            self.new(input)
+            self.new(input,&blk)
           end
         else
-          self.new(input)
+          self.new(input,&blk)
         end
       end
 
@@ -41,7 +41,7 @@ class AngryMob
         @actions = array.norm.map{|s| s.to_s}
       end
 
-      def extract_args(args)
+      def extract_args(args,&blk)
         args.flatten!
 
         case args.size
