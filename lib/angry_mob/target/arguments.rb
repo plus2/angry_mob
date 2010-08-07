@@ -62,6 +62,8 @@ class AngryMob
           raise ArgumentError, "usage: nickname(default_object, [ :optional_hash_of => opts ])"
         end
 
+        new_args.__eval_as_dsl(&blk) if block_given?
+
         new_args
       end
     end
