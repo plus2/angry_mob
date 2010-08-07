@@ -33,3 +33,14 @@ eg 'accessor= Hash' do
   @a.d = d
   Assert( ! same_obj( d, @a.d ) )
 end
+
+eg 'accessor?' do
+  Assert(   @a.b? )
+  Assert( ! @a.c? )
+  Assert(   @a.b.c? )
+  Assert( ! @a.b.x? )
+
+  @a.b.f = false
+
+  Assert( ! @a.b.f? )
+end
