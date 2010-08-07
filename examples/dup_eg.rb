@@ -1,61 +1,15 @@
 require 'eg_helper'
 
+require 'angry_hash/extension_tracking'
+AngryHash.send :include, AngryHash::ExtensionTracking
+
 eg.setup do
   @original = { 'database' => {
-    "micropower_micropower_sandbox"=>
-    {"app_owner"=>"micropower_micropower_sandbox", "server"=>:db},
-      "amc_accred_staging"=>
-    {"app_owner"=>"amc_accred", "server"=>:plus2staging_local_mysql},
-      "post_froggy"=>
-    {"app_owner"=>"froggy_owner",
-      "backup"=>{"to_s3"=>true},
-      "server"=>:postfrog},
-      "isg_url_shortener"=>
-    {"app_owner"=>"isg_sandbox_v5", "server"=>:isg_forums_mysql},
-      "isg_forums"=>{"app_owner"=>"isg_forums", "server"=>:isg_forums_mysql},
-      "eggs_eggs"=>
-    {"app_owner"=>"eggs_eggs",
-      "backup"=>{"to_s3"=>true},
-      "server"=>:db,
-      "admin_owner"=>"eggs_admin"},
-      "myfrogdb"=>{"app_owner"=>:myfroggy, "server"=>:myfrog},
-      "amc_exam_staging"=>
-    {"app_owner"=>"amc_exam", "server"=>:plus2staging_local_mysql},
-      "micropower_golfo"=>{"app_owner"=>:golfo, "server"=>:linode_golfo_mysql},
-      "linode_golfo"=>{"app_owner"=>:golfo, "server"=>:linode_golfo_mysql},
-      "halal_staging"=>
-    {"app_owner"=>"halal", "server"=>:plus2staging_local_postgres},
-      "eggs_enag"=>
-    {"app_owner"=>"eggs_enag", "backup"=>{"to_s3"=>true}, "server"=>:db},
-      "amc_store"=>
-    {"app_owner"=>"amc_store", "backup"=>{"to_s3"=>true}, "server"=>:amc},
-      "weatherzone_wengine"=>
-    {"app_owner"=>"weatherzone_wengine", "server"=>:linode_postgres},
-      "weatherzone_wzfb_staging"=>
-    {"app_owner"=>"weatherzone_wzfb_staging", "server"=>:db},
-      "amc_ncmr"=>
-    {"app_owner"=>"amc_ncmr", "backup"=>{"to_s3"=>true}, "server"=>:amc},
-      "westpac_thinkbank_staging"=>
-    {"app_owner"=>"westpac_thinkbank_staging", "server"=>:db},
-      "micropower_micropower_staging"=>
-    {"app_owner"=>"micropower", "server"=>:staging_mysql},
-      "weatherzone_wx_staging"=>
-    {"app_owner"=>"weatherzone_wx_staging", "server"=>:db},
-      "isg_sandbox_v4"=>
-    {"app_owner"=>"isg_sandbox_v5", "server"=>:isg_forums_mysql},
-      "eggs_aecl"=>
-    {"app_owner"=>"eggs_aecl", "backup"=>{"to_s3"=>true}, "server"=>:db},
-      "eggs_hwag"=>
-    {"app_owner"=>"eggs_hwag", "backup"=>{"to_s3"=>true}, "server"=>:db},
-      "plus2_gemcutter"=>{"app_owner"=>"plus2_gemcutter", "server"=>:db},
-      "isg_sandbox_v5"=>
-    {"app_owner"=>"isg_sandbox_v5", "server"=>:isg_forums_mysql},
-      "amc_exam"=>
-    {"app_owner"=>"amc_exam", "backup"=>{"to_s3"=>true}, "server"=>:amc},
-      "weatherzone_wzfb"=>
-    {"app_owner"=>"weatherzone_wzfb", "backup"=>{"to_s3"=>true}, "server"=>:db},
-      "amc_store_staging"=>
-    {"app_owner"=>"amc_store", "server"=>:plus2staging_local_mysql}
+    "micropower_micropower_sandbox" => {"app_owner" => "micropower_micropower_sandbox", "server" => :db},
+    "post_froggy"                   => {"app_owner" => "froggy_owner", "backup"                  => {"to_s3"                       => true}, "server" => :postfrog},
+    "myfrogdb"                      => {"app_owner" => :myfroggy, "server"                       => :myfrog},
+    "eggs_hwag"                     => {"app_owner" => "eggs_hwag", "backup"                     => {"to_s3"                       => true}, "server" => :db},
+    "isg_sandbox_v5"                => {"app_owner" => "isg_sandbox_v5", "server"                => :isg_forums_mysql},
   }}    
 end
 
@@ -67,10 +21,33 @@ eg 'duping copies symbols' do
   Assert( ah2.database.isg_sandbox_v5.server == @original['database']['isg_sandbox_v5']['server'] )
 end
 
+def same_obj(a,b)
+  a.__id__ == b.__id__
+end
+
+def diff_obj(a,b)
+  ! same_obj(a,b)
+end
+
+eg 'dup is deep' do
+  ah  = AngryHash[ @original ]
+  ah2 = ah.dup
+
+  Assert( diff_obj ah                            , ah2 )
+  Assert( diff_obj ah.database                   , ah2.database )
+  Assert( diff_obj ah.database.post_froggy       , ah2.database.post_froggy )
+  Assert( diff_obj ah.database.post_froggy.backup, ah2.database.post_froggy.backup )
+
+end
+
 module Extendo
   def as_dag
     dag = dup
     dag
+  end
+
+  def is_extended?
+    true
   end
 end
 
@@ -80,9 +57,30 @@ eg 'duping from ext' do
 
   ah2 = ah.as_dag
 
-  Show( AngryHash.shooper )
   Show( ah.__id__ )
   Show( ah2.__id__ )
   
   Show( ah2 )
+end
+
+module ExtendoDb
+  def is_db_extended?
+    true
+  end
+end
+
+eg 'extension preservation' do
+  ah = AngryHash[ @original ]
+  Assert( ! ah.is_extended? )
+  Assert( ! ah.database.post_froggy.is_db_extended? )
+
+  ah.extend(Extendo)
+  ah.database.post_froggy.extend(ExtendoDb)
+
+  Assert(   ah.is_extended? )
+  Assert(   ah.database.post_froggy.is_db_extended? )
+
+  ah2 = ah.dup
+  Show( ah2.is_extended? )
+  Show( ah2.database.post_froggy.is_db_extended? )
 end
