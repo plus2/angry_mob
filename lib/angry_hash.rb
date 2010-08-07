@@ -124,11 +124,11 @@ class AngryHash < Hash
 
     case method_s[-1]
     when ?=
-      return super unless args.size == 1
+      return super unless args.size == 1 && !block_given?
       self[ key ] = args.first
 
     when ??
-      return super unless args.empty?
+      return super unless args.empty? && !block_given?
       !! self[key]
 
     when ?!
@@ -137,7 +137,7 @@ class AngryHash < Hash
       self[key]
 
     else
-      return super unless args.empty?
+      return super unless args.empty? && !block_given?
       self[method_s]
     end
   end
