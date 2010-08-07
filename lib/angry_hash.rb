@@ -1,7 +1,7 @@
+
 class AngryHash < Hash
-  def self.shooper
-    "mooper"
-  end
+  require 'angry_hash/dsl'
+  include AngryHash::DSL
 
   def self.[](other)
     super(__convert(other))
@@ -44,7 +44,7 @@ class AngryHash < Hash
 
   def deep_merge(other_hash)
     # XXX this should convert other to AHash!
-    self.regular_merge(other_hash) do |key, oldval, newval|
+    self.regular_merge( other_hash ) do |key, oldval, newval|
       oldval = AngryHash.__convert_value(oldval)
       newval = AngryHash.__convert_value(newval)
 
@@ -124,11 +124,11 @@ class AngryHash < Hash
 
     case method_s[-1]
     when ?=
-      return super unless args.size == 1
+      return super unless args.size == 1 && !block_given?
       self[ key ] = args.first
 
     when ??
-      return super unless args.empty?
+      return super unless args.empty? && !block_given?
       !! self[key]
 
     when ?!
@@ -137,7 +137,7 @@ class AngryHash < Hash
       self[key]
 
     else
-      return super unless args.empty?
+      return super unless args.empty? && !block_given?
       self[method_s]
     end
   end

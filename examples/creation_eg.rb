@@ -38,5 +38,6 @@ eg 'creation duplicates' do
   Assert(a1.c[7].__id__ != a2.c[7].__id__)
 end
 
+
 #eg 'cycle detection' do
 #end
