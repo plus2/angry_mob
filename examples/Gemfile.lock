@@ -1,0 +1,10 @@
+GEM
+  remote: http://rubygems.org/
+  specs:
+    exemplor (3000.3.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  exemplor
