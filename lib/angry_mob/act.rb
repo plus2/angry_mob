@@ -104,15 +104,15 @@ class AngryMob
     end
 
     def act_now act_name, *args
-      mob.act_scheduler.act_now(act_name,*args)
+      mob.act_scheduler.act_now act_name, *args
+    end
+
+    def fire event_name
+      mob.act_scheduler.fire event_name
     end
 
     def schedule_act act_name
-      mob.act_scheduler.schedule_act(act_name)
-    end
-
-    def schedule_acts_matching(regex,&block)
-      mob.act_scheduler.schedule_acts_matching(regex,&block)
+      raise "to remove"
     end
 
   end

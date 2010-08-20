@@ -6,114 +6,22 @@ class AngryMob
 
       def initialize(mob)
         @mob = mob
+        @event_queue = []
         reset!
       end
 
-      def ui; @mob.ui end
-
-      def reset!
-        @act_names = nil
-        @acted = []
-      end
-
-      def act_names
-        @act_names ||= @node.acts || []
-      end
-
-      def acts
-        @acts ||= Dictionary.new
-      end
-
-      def add_act(name,act)
-        acts[name.to_s] = act
-      end
-
       def run!
-        ui.task "running acts #{act_names.inspect}"
-        each_act {|act| act_now(act)}
+        ui.task "available acts #{available_acts.keys.inspect}"
+
+        seed_events.each do |event|
+          fire event
+        end
+
+        exhaust_queue
+
         ui.good "finished running acts"
-        finalise_acts!
-      end
 
-      def each_act
-        while act_name = next_act
-          ui.debug "acting out #{act_name}"
-
-          act = acts[act_name]
-
-          unless act
-            act_missing!(act_name)
-            next
-          end
-          
-          yield act
-        end
-        @iterating = false
-      end
-
-      def start_iterating!(with=act_names)
-        unless @iterating
-          @iterating_act_names = with.dup
-          @iterating = true
-        end
-      end
-
-      def next_act
-        start_iterating!
-        @iterating_act_names.shift
-      end
-
-      def schedule_act(*acts)
-        raise(CompilationError, "schedule_act called when not compiling") unless @iterating
-        ui.info "scheduling #{acts.inspect}"
-        @iterating_act_names += acts
-      end
-
-      def schedule_acts_matching(regex=nil,&block)
-        raise(CompilationError, "schedule_act called when not compiling") unless @iterating
-
-        act_keys = acts.keys
-
-        acts_to_schedule = if regex
-                              act_keys.grep(regex)
-                            else
-                              act_keys.select(&block)
-                            end
-
-        schedule_act(*acts_to_schedule)
-      end
-
-      def finalise_acts!
-        # notifications only act as necessary, so its safe to run them all.
-        ui.task "running notifications"
-        to_notify = acts.keys.select {|k| k[%r{^notifications_for/}]}
-
-        unless to_notify.empty?
-          ui.info "running notifiers #{to_notify.inspect}"
-
-          start_iterating!(to_notify)
-          each_act {|act| act_now(act)}
-        end
-
-
-        # finalisers should only run if the act of the same name has run first
-        ui.task "running finalisations"
-
-        to_finalise = acted.map {|name| "finalise/#{name}"} & acts.keys
-        unless to_finalise.empty?
-          ui.info "running acts finalisers #{to_finalise.inspect}"
-
-          start_iterating!(to_finalise)
-          each_act {|act| act_now(act)}
-        end
-      end
-
-      def raise_on_missing_act?
-        !( FalseClass === mob.node.raise_on_missing_act )
-      end
-
-      def act_missing!(name)
-        raise(AngryMob::MobError, "no act named '#{name}'") if raise_on_missing_act?
+        # finalise_acts!
       end
 
       def act_now(act_name,*arguments)
@@ -134,10 +42,95 @@ class AngryMob
           return
         end
 
-        acted << act_name
+        acted!(act_name)
 
         act.run!(*arguments)
       end
+
+      def fire(event)
+        ui.task "firing '#{event}'"
+        @event_queue.unshift event
+      end
+
+      def exhaust_queue
+        while event = @event_queue.pop do
+          ui.log "popped event #{event}"
+
+          acts = available_acts.values.select {|act| act.match?(event)}
+
+          acts.each do |act|
+            next if acted?(act)
+            acted!(act)
+
+            act.run!
+            fire( "finished/#{act.name}" )
+          end
+        end
+
+        ui.log "events done"
+      end
+
+      def acted!(act_or_name)
+        name = act_name(act_or_name)
+
+        available_acts.delete(name)
+        acted_acts[ name ]
+        acted << name
+      end
+
+      def acted?(act_or_name)
+        acted_acts.key?( act_name(act_or_name) )
+      end
+
+
+      ## Utilities
+
+      def add_act(name,act)
+        acts[name.to_s]           = act
+        available_acts[name.to_s] = act
+      end
+
+      def ui; @mob.ui end
+
+      def reset!
+        %w{ seed_events available_acts acted_acts }.each {|ivar| instance_variable_set("@#{ivar}", nil)}
+        @acted = []
+      end
+      
+      def seed_events
+        @seed_events ||= ( @node.fire || [] ).map {|e| e.to_s}
+      end
+
+      def acts
+        @acts ||= Dictionary.new
+      end
+
+      def available_acts
+        @available_acts ||= {}
+      end
+
+      def acted_acts
+        @acted_acts ||= {}
+      end
+
+      def raise_on_missing_act?
+        !( FalseClass === mob.node.raise_on_missing_act )
+      end
+
+      def act_missing!(name)
+        raise(AngryMob::MobError, "no act named '#{name}'") if raise_on_missing_act?
+      end
+
+      def act_name(act_or_name)
+        name = if AngryMob::Act === act_or_name
+          act_or_name.name
+        else
+          act_or_name
+        end
+
+        name.to_s
+      end
+
     end
   end
 end
