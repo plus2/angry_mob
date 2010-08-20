@@ -2,19 +2,26 @@ class AngryMob
   # A `Builder::Act` groups target calls.
   class Act
     autoload :Scheduler, "angry_mob/act/scheduler"
+    autoload :Predicate, "angry_mob/act/predicate"
 
     attr_reader :mob, :name, :definition_file
 
-    def initialize(name,multi,&blk)
-      @name = name
-      @multi = multi
-      @blk = blk
+    def initialize(name,options={},&blk)
+      @name    = name.to_s
+      @options = options
+      @multi   = !! options.delete(:multi)
+      @blk     = blk
+      @predicate = Predicate.build( options.slice(:on,:on_all) )
     end
 
     def ui; mob.ui end
     def log(message); mob.ui.log message end
 
     def multi?; !!@multi end
+
+    def match?(event)
+      @predicate.match?(event)
+    end
 
     # Binds the act to the mob and the file from which it came.
     def bind(mob,file)
@@ -24,6 +31,7 @@ class AngryMob
       mob.act_scheduler.add_act @name, self
     end
 
+    # XXX is this used?
     def self.synthesise(mob,name,&blk)
       act = new(name,true,&blk)
       act.bind(mob,"name")
@@ -65,7 +73,7 @@ class AngryMob
     end
 
     def in_sub_act(*args,&blk)
-      sub_act = self.class.new("#{name}-sub-act",true,&blk)
+      sub_act = self.class.new("#{name}-sub-act", {:multi => true}, &blk)
       sub_act.bind(@mob,@definition_file)
       sub_act.run!(*args)
     end
