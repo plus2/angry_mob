@@ -5,6 +5,12 @@ class AngryMob
   class Builder
     include Log
 
+    attr_reader :attributes
+
+    def initialize(attributes)
+      @attributes = attributes
+    end
+
     def self.from_file(path)
       path = Pathname(path)
       new.from_file(path)
@@ -45,10 +51,10 @@ class AngryMob
       mob.consolidate_node = @node_consolidation_block
 
       # create and bind acts
-      acts.each do |name,(blk,file,multi)|
-        act = Act.new(name,multi,&blk)
+      acts.each do |name,(blk,options)|
+        act = Act.new(name,options,&blk)
         act.extend helper_mod 
-        act.bind(mob,file)
+        act.bind(mob,options.delete(:definition_file))
       end
 
       mob
@@ -57,14 +63,17 @@ class AngryMob
     #### DSL API
 
     # Defines an `act` block
-    def act(name, definition_file=nil, &blk)
-      definition_file ||= file
-      acts[name.to_sym] = [blk,definition_file.dup,false]
+    def act(name, options={}, &blk)
+      options[:definition_file] ||= file
+
+      acts[name.to_sym] = [blk,options.dup]
     end
 
-    def multi_act(name, definition_file=nil, &blk)
-      definition_file ||= file
-      acts[name.to_sym] = [blk,definition_file.dup,true]
+    def multi_act(name, options={}, &blk)
+      options[:definition_file] ||= file
+      options[:multi] = true
+
+      acts[name.to_sym] = [blk,options.dup]
     end
 
     def act_helper(&blk)

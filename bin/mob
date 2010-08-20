@@ -46,7 +46,8 @@ class MobCLI < Thor
       @hooks.attrs( attributes )
 
       AngryMob::Mob.ui = ui   # XXX not threadsafe, but what is?
-      mob_loader = AngryMob::MobLoader.new
+
+      mob_loader = AngryMob::MobLoader.new(attributes)
       
       config.mobs.each {|mob_path| mob_loader.add_mob(mob_path)}
 

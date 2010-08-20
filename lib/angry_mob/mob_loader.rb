@@ -12,9 +12,9 @@ class AngryMob
       Mob.ui
     end
 
-    def initialize
-      @builder = Builder.new
-      @mobs = Dictionary.new
+    def initialize(attributes)
+      @builder = Builder.new(attributes)
+      @mobs    = Dictionary.new
       @loaded_mobs = {}
     end
 
