@@ -1,48 +1,42 @@
 grammar Predicate
 
-  rule expression_tail
-    (p0:primary tail:(S binary_op S p1:primary)*) {
-      def value
-      end
-    }
-  end
-
   rule predicate
     expression | primary
   end
 
   rule expression
     (p0:primary S binary_op S p1:primary) {
-      def value
-        [binary_op.text.to_sym, p0.value, p1.value]
+      def to_ruby
+        "( #{p0.to_ruby} #{binary_op.text} #{p1.to_ruby} )"
       end
     }
   end
 
   rule primary
-    (neg:'!'? exp:(predicate_paren | event)) {
-      def value
+    (neg:'!'? exp:(event | expression_paren | expression)) {
+      def to_ruby
         if neg.length > 0
-          [:not, exp.value]
+          "! #{exp.to_ruby}"
         else
-          exp.value
+          exp.to_ruby
         end
       end
     }
   end
 
-  rule predicate_paren
-    ('(' predicate ')') {
-      def value
-        predicate.value
+
+  rule expression_paren
+    ('(' expression ')') {
+      def to_ruby
+        expression.to_ruby
       end
     }
   end
 
   rule event
     ([_a-zA-Z] [-a-zA-Z0-9_/]*) {
-      def value
-        text
+      def to_ruby
+        "match_event?(new_event,'#{text}')"
       end
     }
   end
@@ -69,6 +63,7 @@ grammar Predicate
   rule s
     white*
   end
+
   rule S
     white+
   end

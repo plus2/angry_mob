@@ -1,8 +1,14 @@
+require 'citrus'
+
 class AngryMob
   class Act
     class Predicate
       def self.build(*definitions,&blk)
         new(*definitions,&blk)
+      end
+
+      def self.parser
+        @parser ||= Citrus.load( File.expand_path('../predicate', __FILE__) ).first
       end
 
       attr_reader :options
@@ -23,40 +29,21 @@ class AngryMob
       end
 
       def parse!
-        if on = @options.delete(:on)
-          @expression = on
-        elsif on_all = @options.delete(:on_all)
-          @expression = on_all.dup.unshift(:and)
-        elsif on_any = @options.delete(:on_any)
-          @expression = on_any.dup.unshift(:or)
-        end
+        ruby_string = Predicate.parser.parse(@options.delete(:on)).to_ruby
+        self.class.class_eval "def match_predicate?(new_event)\n#{ruby_string}\nend".tapp
+      rescue Citrus::ParseError
+        $!.consumed.tapp(:c)
+        raise $!
       end
 
       def match?(event)
         event = event.to_s
         seen!(event)
-        match_expression?(event,@expression)
+        match_predicate?(event)
       end
 
-      def match_expression?(event,expression)
-        if Array === expression
-          op,sub_expressions = expression[0], expression[1..-1]
-
-          case op
-          when :and
-            sub_expressions.all? {|ex| match_expression?(event, ex)}
-          when :or
-            sub_expressions.any? {|ex| match_expression?(event, ex)}
-          else
-            raise "unknown operand #{op}"
-          end
-        else
-          match_leaf?( event, expression )
-        end
-      end
-
-      def match_leaf?(event,leaf)
-        event == leaf.to_s || seen?(leaf)
+      def match_event?(new_event,event)
+        new_event == event.to_s || seen?(event)
       end
 
       def seen!(event)
