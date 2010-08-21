@@ -1,0 +1,85 @@
+grammar Predicate
+
+  rule expression_tail
+    (p0:primary tail:(S binary_op S p1:primary)*) {
+      def value
+      end
+    }
+  end
+
+  rule predicate
+    expression | primary
+  end
+
+  rule expression
+    (p0:primary S binary_op S p1:primary) {
+      def value
+        [binary_op.text.to_sym, p0.value, p1.value]
+      end
+    }
+  end
+
+  rule primary
+    (neg:'!'? exp:(predicate_paren | event)) {
+      def value
+        if neg.length > 0
+          [:not, exp.value]
+        else
+          exp.value
+        end
+      end
+    }
+  end
+
+  rule predicate_paren
+    ('(' predicate ')') {
+      def value
+        predicate.value
+      end
+    }
+  end
+
+  rule event
+    ([_a-zA-Z] [-a-zA-Z0-9_/]*) {
+      def value
+        text
+      end
+    }
+  end
+
+  rule uanry_op
+    '!'
+  end
+  rule binary_op
+    '&&' | '||'
+  end
+
+  rule and
+    '&&'
+  end
+
+  rule or
+    '||'
+  end
+
+  rule not
+    '!'
+  end
+
+  rule s
+    white*
+  end
+  rule S
+    white+
+  end
+    
+  rule white
+    [ \t\n\r]
+  end
+
+  # Non-space char
+  rule ns
+    ![ ;,!})\n] .
+  end
+
+end
