@@ -30,7 +30,7 @@ class AngryMob
 
       def parse!
         ruby_string = Predicate.parser.parse(@options.delete(:on)).to_ruby
-        self.class.class_eval "def match_predicate?(new_event)\n#{ruby_string}\nend".tapp
+        instance_eval "@predicate = lambda {|new_event| #{ruby_string} }".tapp
       rescue Citrus::ParseError
         $!.consumed.tapp(:c)
         raise $!
@@ -39,7 +39,7 @@ class AngryMob
       def match?(event)
         event = event.to_s
         seen!(event)
-        match_predicate?(event)
+        @predicate[event]
       end
 
       def match_event?(new_event,event)
