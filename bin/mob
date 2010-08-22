@@ -4,7 +4,7 @@
 require 'pathname'
 @root = Pathname(__FILE__).dirname.parent.expand_path
 
-%w{json thor angry_hash}.each do |lib|
+%w{json thor angry_hash citrus}.each do |lib|
   root = @root+'vendor'+lib
   $: << (root+'lib')
 end
@@ -68,7 +68,7 @@ class MobCLI < Thor
   def build_attributes
     attributes = load_attributes
 
-    attributes.acts = [ config.act ]
+    attributes.fire = [ config.act ]
 
     if config.allow_missing_act?
       attributes.raise_on_missing_act = false

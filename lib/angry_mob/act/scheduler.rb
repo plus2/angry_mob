@@ -2,11 +2,12 @@ class AngryMob
   class Act
     class Scheduler
       attr_writer :node
-      attr_reader :acted, :mob
+      attr_reader :acted, :mob, :event_processors
 
       def initialize(mob)
         @mob = mob
         @event_queue = []
+        @event_processors = []
         reset!
       end
 
@@ -16,7 +17,9 @@ class AngryMob
         seed_events.each do |event|
           fire event
         end
+        exhaust_queue
 
+        fire 'finalise'
         exhaust_queue
 
         ui.good "finished running acts"
@@ -50,6 +53,9 @@ class AngryMob
       def fire(event)
         ui.task "firing '#{event}'"
         @event_queue.unshift event
+
+        # process the eq
+        @event_processors.each {|ep| ep.call(@event_queue)}
       end
 
       def exhaust_queue

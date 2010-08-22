@@ -2,9 +2,39 @@ require 'citrus'
 
 class AngryMob
   class Act
+    class NoPredicate
+      def match?(*); false end
+    end
+
+    class YesPredicate
+      def match?(*); true end
+    end
+
     class Predicate
-      def self.build(*definitions,&blk)
-        new(*definitions,&blk)
+      def self.build(*definition,&blk)
+        options = Hash === definition.last ? definition.last : {}
+
+        if on = options[:on]
+          on_string = on.to_s
+        elsif on_all = options[:on_all]
+          if on_all.empty?
+            return NoPredicate.new
+          else
+            on_string = on_all.join(' && ')
+          end
+        elsif on_any = options[ :on_any ]
+          if on_any.empty?
+            return NoPredicate.new
+          else
+            on_string = on_any.join(' || ')
+          end
+        end
+
+        if on_string
+          new(on_string,options,&blk)
+        else
+          NoPredicate.new
+        end
       end
 
       def self.parser
@@ -12,9 +42,9 @@ class AngryMob
       end
 
       attr_reader :options
-      def initialize(*definition,&blk)
-        @options = AngryHash[ Hash === definition.last ? definition.pop : {} ]
-        validate_options!
+      def initialize(on,options,&blk)
+        @on = on.tapp
+        @options = AngryHash[ options ]
         parse!
       end
 
@@ -22,17 +52,14 @@ class AngryMob
         @seen = nil
       end
 
-      def validate_options!
-        if ( passed = options.values_at(:on_any, :on, :on_all).compact ).size > 1
-          raise "please specify only one of :on_all, :on or :on_any [you passed #{passed.inspect}]"
-        end
-      end
-
       def parse!
-        ruby_string = Predicate.parser.parse(@options.delete(:on)).to_ruby
+        ruby_string = Predicate.parser.parse(@on).to_ruby
         instance_eval "@predicate = lambda {|new_event| #{ruby_string} }".tapp
       rescue Citrus::ParseError
-        $!.consumed.tapp(:c)
+        puts "exception [#{$!.class}] parsing: expression=#{on}\nconsumed=#{$!.consumed}"
+        raise $!
+      rescue
+        puts "exception [#{$!.class}] parsing: expression=#{on} #{@options.inspect}"
         raise $!
       end
 

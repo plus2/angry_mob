@@ -3,6 +3,7 @@ class AngryMob
   class Act
     autoload :Scheduler, "angry_mob/act/scheduler"
     autoload :Predicate, "angry_mob/act/predicate"
+    autoload :EventProcessor, "angry_mob/act/event_processor"
 
     attr_reader :mob, :name, :definition_file
 
@@ -11,7 +12,13 @@ class AngryMob
       @options = options
       @multi   = !! options.delete(:multi)
       @blk     = blk
-      @predicate = Predicate.build( options.slice(:on,:on_all) )
+      begin
+        puts "creating predicate on act #{name}"
+        @predicate = Predicate.build( options.slice(:on,:on_all,:on_any) )
+      rescue Citrus::ParseError
+        puts "error creating predicate on act #{name} #{options[:definition_file]}"
+        raise $!
+      end
     end
 
     def ui; mob.ui end
@@ -82,21 +89,6 @@ class AngryMob
 
     def defaults
       @defaults ||= Target::Defaults.new
-    end
-
-    def notify
-      Target::Notify.new(self)
-    end
-
-    def notifications
-      mob.notifier
-    end
-    
-    # directly schedule a call on the delayed list
-    def later
-      n = Target::Notify.new(self)
-      mob.notifier.schedule_notification n
-      n
     end
 
     def node

@@ -3,10 +3,9 @@ require "angry_mob/target/tracking"
 class AngryMob
   class TargetError < StandardError; end
   class Target
-    autoload :Mother  , 'angry_mob/target/mother'
-    autoload :Call    , 'angry_mob/target/call'
-    autoload :Defaults, "angry_mob/target/defaults"
-    autoload :Notify  , "angry_mob/target/notify"
+    autoload :Mother   , 'angry_mob/target/mother'
+    autoload :Call     , 'angry_mob/target/call'
+    autoload :Defaults , "angry_mob/target/defaults"
     autoload :Arguments, "angry_mob/target/arguments"
 
     autoload :DefaultResourceLocator, "angry_mob/target/default_resource_locator"
@@ -120,7 +119,7 @@ class AngryMob
         # If the state's changed, let it be known
         if state_changed?
           changed 
-          notify
+          fire!
           ui.ok!
         else
           ui.skipped! "target didn't change"
@@ -174,26 +173,19 @@ class AngryMob
       @problems << problem
     end
 
-
     # Calculate and cache the state before any actions have been performed.
     def before_state
       @before_state ||= state
     end
 
-
-
     def node
       mob.node
     end
 
-    def mk_notify
-      Notify.new(act)
-    end
-
     # Called when the state has changed.
-    # Very simply delegates notification to the target scheduler
-    def notify
-      mob.notifier.notify( args.notify ) if args.notify
+    # Very simply delegates event to the act scheduler
+    def fire!
+      mob.act_scheduler.fire(args.fire)
     end
 
     # Give the target itself a neat place to react to changes.

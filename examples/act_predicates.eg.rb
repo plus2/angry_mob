@@ -2,7 +2,8 @@ require 'eg_helper'
 require 'angry_mob'
 
 eg 'predicate: event' do
-  predicate = AngryMob::Act::Predicate.new(:on => %{event})
+  predicate = AngryMob::Act::Predicate.build(:on => :event)
+  predicate = AngryMob::Act::Predicate.build(:on => %{event})
   Assert(   predicate.match?('event') )
 
   Assert(   predicate.seen?('event') )
@@ -10,7 +11,9 @@ eg 'predicate: event' do
 end
 
 eg 'predicate: event and flop' do
-  predicate = AngryMob::Act::Predicate.new(:on => %{event && flop})
+  predicate = AngryMob::Act::Predicate.build(:on => %{event && flop})
+  # predicate = AngryMob::Act::Predicate.build(:on_all => [])
+
   #predicate = AngryMob::Act::Predicate.new(:on => %{event && flap && farp})
 
   #predicate = AngryMob::Act::Predicate.new(:on => %{flip || !(foo/bar && !moo)})
@@ -25,7 +28,7 @@ eg 'predicate: event and flop' do
 end
 
 eg 'predicate: event or flip' do
-  predicate = AngryMob::Act::Predicate.new(:on => %{event || flip})
+  predicate = AngryMob::Act::Predicate.build(:on => %{event || flip})
 
   Assert( ! predicate.match?('flop') )
   Assert(   predicate.match?('event') )
@@ -37,14 +40,14 @@ end
  
 
 eg 'predicate: generic' do
-  predicate = AngryMob::Act::Predicate.new(:on => %{event || flop})
+  predicate = AngryMob::Act::Predicate.build(:on => %{event || flop})
 
   Assert( ! predicate.match?('blip') )
   Assert(   predicate.match?('flop') )
 end
 
 eg 'predicate: not event' do
-  predicate = AngryMob::Act::Predicate.new(:on => %{flip && !event})
+  predicate = AngryMob::Act::Predicate.build(:on => %{flip && !event})
 
   Assert( ! predicate.match?('event') )
   Assert( ! predicate.match?('flip') )
@@ -56,7 +59,7 @@ eg 'predicate: not event' do
 end
 
 eg 'predicate: not or event' do
-  predicate = AngryMob::Act::Predicate.new(:on => %{flip || !event})
+  predicate = AngryMob::Act::Predicate.build(:on => %{flip || !event})
 
   Assert( ! predicate.match?('event') )
   Assert(   predicate.match?('flip') )

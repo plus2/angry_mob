@@ -37,12 +37,12 @@ class AngryMob
     def to_mob
       mob = Mob.new
 
-      # pre-setup
+      # pre-setup - combine blocks added
       mob.setup_node = lambda {|node,defaults|
         node_setup_blocks.each {|blk| blk[node,defaults]}
       }
 
-      # in-setup
+      # in-setup - combine blocks added
       mob.node_defaults = lambda {|node,defaults|
         node_default_blocks.each {|blk| blk[node,defaults]}
       }
@@ -57,35 +57,39 @@ class AngryMob
         act.bind(mob,options.delete(:definition_file))
       end
 
+      # bind event processors
+      event_processors.each do |ev_proc|
+        ev_proc.bind(mob)
+      end
+
       mob
     end
 
     #### DSL API
 
     # Defines an `act` block
-    def act(name, options={}, &blk)
+    def act(*args, &blk)
+      options = Hash === args.last ? args.pop : {}
+      name = args.shift || "anon-#{random_name}"
+
       options[:definition_file] ||= file
 
-      acts[name.to_sym] = [blk,options.dup]
+      acts[name.to_s] = [blk,options.dup]
     end
 
     def multi_act(name, options={}, &blk)
       options[:definition_file] ||= file
       options[:multi] = true
 
-      acts[name.to_sym] = [blk,options.dup]
+      acts[name.to_s] = [blk,options.dup]
+    end
+
+    def event(*args,&blk)
+      event_processors << AngryMob::Act::EventProcessor.new(*args,&blk)
     end
 
     def act_helper(&blk)
       helper_mod.module_eval(&blk)
-    end
-
-    def finalise(*act_names, &blk)
-      act_names.norm.each {|a| act("finalise/#{a}",&blk)}
-    end
-
-    def notifications_for(name,&blk)
-      act("notifications_for/#{name}") { notifications.for(name, :context => self, &blk) }
     end
 
     # A `setup_node` block allows the mob to set defaults, load resource locators and anything else you like.
@@ -116,9 +120,16 @@ class AngryMob
       @acts ||= Dictionary.new
     end
 
+    def event_processors
+      @event_processors ||= []
+    end
+
     def helper_mod
       @helper_mod ||= Module.new
     end
 
+    def random_name
+      # TODO - impl
+    end
   end
 end
