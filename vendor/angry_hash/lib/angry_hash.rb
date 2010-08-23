@@ -200,7 +200,7 @@ class AngryHash < Hash
         __convert(v,cycle_watch)
       when Array
         v.map {|vv| __convert_value(vv,cycle_watch)}
-      when Fixnum,Symbol,NilClass,TrueClass,FalseClass,Float
+      when Fixnum,Symbol,NilClass,TrueClass,FalseClass,Float,Bignum
         v
       else
         v.dup
