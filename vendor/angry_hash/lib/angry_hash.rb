@@ -4,8 +4,12 @@ class AngryHash < Hash
   require 'angry_hash/dsl'
   include AngryHash::DSL
 
-  def self.[](other)
-    super(__convert(other))
+  def self.[](other=nil)
+    if other
+      super(__convert(other))
+    else
+      new
+    end
   end
 
   alias_method :regular_writer, :[]=    unless method_defined?(:regular_writer)
