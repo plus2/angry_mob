@@ -1,5 +1,6 @@
 
 class AngryHash < Hash
+  # config
   require 'angry_hash/dsl'
   include AngryHash::DSL
 
