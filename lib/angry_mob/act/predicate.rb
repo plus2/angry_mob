@@ -4,10 +4,12 @@ class AngryMob
   class Act
     class NoPredicate
       def match?(*); false end
+      def on; "false" end
     end
 
     class YesPredicate
       def match?(*); true end
+      def on; "true" end
     end
 
     class Predicate
@@ -41,9 +43,9 @@ class AngryMob
         @parser ||= Citrus.load( File.expand_path('../predicate', __FILE__) ).first
       end
 
-      attr_reader :options
+      attr_reader :options, :on
       def initialize(on,options,&blk)
-        @on = on.tapp
+        @on = on
         @options = AngryHash[ options ]
         parse!
       end
@@ -54,7 +56,7 @@ class AngryMob
 
       def parse!
         ruby_string = Predicate.parser.parse(@on).to_ruby
-        instance_eval "@predicate = lambda {|new_event| #{ruby_string} }".tapp
+        instance_eval "@predicate = lambda {|new_event| #{ruby_string} }"
       rescue Citrus::ParseError
         puts "exception [#{$!.class}] parsing: expression=#{on}\nconsumed=#{$!.consumed}"
         raise $!
