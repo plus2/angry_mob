@@ -185,7 +185,7 @@ class AngryMob
     # Called when the state has changed.
     # Very simply delegates event to the act scheduler
     def fire!
-      mob.act_scheduler.fire(args.fire)
+      mob.act_scheduler.fire(args.fire) if args.fire.present?
     end
 
     # Give the target itself a neat place to react to changes.
