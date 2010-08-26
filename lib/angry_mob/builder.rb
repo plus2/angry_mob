@@ -51,10 +51,9 @@ class AngryMob
       mob.consolidate_node = @node_consolidation_block
 
       # create and bind acts
-      acts.each do |name,(blk,options)|
-        act = Act.new(name,options,&blk)
+      acts.each do |(act,definition_file)|
         act.extend helper_mod 
-        act.bind(mob,options.delete(:definition_file))
+        act.bind(mob,definition_file)
       end
 
       # bind event processors
@@ -69,19 +68,15 @@ class AngryMob
 
     # Defines an `act` block
     def act(*args, &blk)
-      options = Hash === args.last ? args.pop : {}
-      name = args.shift || "anon-#{random_name}"
-
-      options[:definition_file] ||= file
-
-      acts[name.to_s] = [blk,options.dup]
+      act = Act.new(*args,&blk)
+      acts << [act,file.dup]
     end
 
     def multi_act(name, options={}, &blk)
-      options[:definition_file] ||= file
       options[:multi] = true
+      act = Act.new(name,options,&blk)
 
-      acts[name.to_s] = [blk,options.dup]
+      acts << [act,file.dup]
     end
 
     def event(*args,&blk)
@@ -117,7 +112,7 @@ class AngryMob
     end
 
     def acts
-      @acts ||= Dictionary.new
+      @acts ||= []
     end
 
     def event_processors
@@ -126,10 +121,6 @@ class AngryMob
 
     def helper_mod
       @helper_mod ||= Module.new
-    end
-
-    def random_name
-      # TODO - impl
     end
   end
 end

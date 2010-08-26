@@ -12,8 +12,6 @@ class AngryMob
       end
 
       def run!
-        ui.task "available acts #{available_acts.keys.inspect}"
-
         seed_events.each do |event|
           fire event
         end
