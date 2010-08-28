@@ -1,20 +1,40 @@
 class AngryMob
   # A `Builder::Act` groups target calls.
   class Act
-    autoload :Scheduler, "angry_mob/act/scheduler"
+    autoload :Scheduler     , "angry_mob/act/scheduler"
+    autoload :Predicate     , "angry_mob/act/predicate"
+    autoload :EventProcessor, "angry_mob/act/event_processor"
 
-    attr_reader :mob, :name, :definition_file
+    attr_reader :mob, :name, :definition_file, :options, :predicate
 
-    def initialize(name,multi,&blk)
-      @name = name
-      @multi = multi
-      @blk = blk
+    def initialize(*args,&blk)
+      @options = args.extract_options!
+      @name    = args.shift || generate_random_name
+
+      @multi   = !! options.delete(:multi)
+      @blk     = blk
+
+      parse_predicate!
+    end
+
+    def parse_predicate!
+      begin
+        @predicate = Predicate.build( options.slice(:on,:on_all,:on_any) )
+      rescue Citrus::ParseError
+        puts "error creating predicate on act #{name} #{options[:definition_file]}"
+        raise $!
+      end
     end
 
     def ui; mob.ui end
+
     def log(message); mob.ui.log message end
 
     def multi?; !!@multi end
+
+    def match?(event)
+      @predicate.match?(event)
+    end
 
     # Binds the act to the mob and the file from which it came.
     def bind(mob,file)
@@ -24,6 +44,7 @@ class AngryMob
       mob.act_scheduler.add_act @name, self
     end
 
+    # XXX is this used?
     def self.synthesise(mob,name,&blk)
       act = new(name,true,&blk)
       act.bind(mob,"name")
@@ -65,7 +86,7 @@ class AngryMob
     end
 
     def in_sub_act(*args,&blk)
-      sub_act = self.class.new("#{name}-sub-act",true,&blk)
+      sub_act = self.class.new("sub-act-#{name}", {:multi => true}, &blk)
       sub_act.bind(@mob,@definition_file)
       sub_act.run!(*args)
     end
@@ -76,36 +97,26 @@ class AngryMob
       @defaults ||= Target::Defaults.new
     end
 
-    def notify
-      Target::Notify.new(self)
-    end
-
-    def notifications
-      mob.notifier
-    end
-    
-    # directly schedule a call on the delayed list
-    def later
-      n = Target::Notify.new(self)
-      mob.notifier.schedule_notification n
-      n
-    end
-
     def node
       mob.node
     end
 
     def act_now act_name, *args
-      mob.act_scheduler.act_now(act_name,*args)
+      mob.act_scheduler.act_now act_name, *args
+    end
+
+    def fire event_name
+      mob.act_scheduler.fire event_name
     end
 
     def schedule_act act_name
-      mob.act_scheduler.schedule_act(act_name)
+      raise "to remove"
     end
 
-    def schedule_acts_matching(regex,&block)
-      mob.act_scheduler.schedule_acts_matching(regex,&block)
+    protected
+    def generate_random_name
+      # TODO take definition file into account!
+      "act-#{SecureRandom.hex(10)}"
     end
-
   end
 end

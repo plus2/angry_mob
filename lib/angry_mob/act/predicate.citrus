@@ -1,0 +1,73 @@
+grammar Predicate
+  rule expression
+    and_expression
+  end
+
+  rule and_expression
+    (p0:or_expression S '&&' S p1:and_expression)
+    {
+      def to_ruby
+        "( #{p0.to_ruby} && #{p1.to_ruby} )"
+      end
+    }
+    |
+    or_expression
+  end
+
+  rule or_expression
+    (p0:primary S '||' S p1:and_expression)
+    {
+      def to_ruby
+        "( #{p0.to_ruby} || #{p1.to_ruby} )"
+      end
+    }
+    |
+    primary
+  end
+
+  rule primary
+    (neg:'!'? exp:(event | expression_paren)) {
+      def to_ruby
+        if neg.length > 0
+          "! #{exp.to_ruby}"
+        else
+          exp.to_ruby
+        end
+      end
+    }
+  end
+
+  rule expression_paren
+    ('(' and_expression ')') {
+      def to_ruby
+        and_expression.to_ruby
+      end
+    }
+  end
+
+  rule event
+    ([_a-zA-Z] [-a-zA-Z0-9_/]*) {
+      def to_ruby
+        "match_event?(new_event,'#{text}')"
+      end
+    }
+  end
+
+  rule s
+    white*
+  end
+
+  rule S
+    white+
+  end
+    
+  rule white
+    [ \t\n\r]
+  end
+
+  # Non-space char
+  rule ns
+    ![ ;,!})\n] .
+  end
+
+end

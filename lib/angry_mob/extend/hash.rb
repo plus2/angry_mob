@@ -24,37 +24,46 @@ class Hash
   end
 
   # Return a new hash with all keys converted to symbols.
-    def symbolize_keys
-      inject({}) do |options, (key, value)|
-        options[(key.to_sym rescue key) || key] = value
-        options
-      end
+  def symbolize_keys
+    inject({}) do |options, (key, value)|
+      options[(key.to_sym rescue key) || key] = value
+    options
     end
+  end
 
-    # Destructively convert all keys to symbols.
-    def symbolize_keys!
-      self.replace(self.symbolize_keys)
+  # Destructively convert all keys to symbols.
+  def symbolize_keys!
+    self.replace(self.symbolize_keys)
+  end
+
+  def deep_symbolize_keys
+    inject({}) do |options, (key, value)|
+      options[(key.to_sym rescue key) || key] = __recurse_deep_symbolize_keys(value)
+    options
     end
+  end
 
-    def deep_symbolize_keys
-      inject({}) do |options, (key, value)|
-        options[(key.to_sym rescue key) || key] = __recurse_deep_symbolize_keys(value)
-      options
-      end
+  def __recurse_deep_symbolize_keys(value)
+    case value
+    when Hash
+      value.deep_symbolize_keys
+    when Array
+      value.map {|v| __recurse_deep_symbolize_keys(v)}
+    else
+      value
     end
+  end
 
-    def __recurse_deep_symbolize_keys(value)
-      case value
-      when Hash
-        value.deep_symbolize_keys
-      when Array
-        value.map {|v| __recurse_deep_symbolize_keys(v)}
-      else
-        value
-      end
-    end
-    
+  def slice(*keys)
+    keys.uniq!
+    hash = {}
+    keys.each { |k| hash[k] = self[k] if key?(k) }
+    hash
+  end
 
+  def slice!(*keys)
+    replace(slice(*keys))
+  end
 end
 
 class AngryHash

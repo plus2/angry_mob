@@ -4,7 +4,7 @@
 require 'pathname'
 @root = Pathname(__FILE__).dirname.parent.expand_path
 
-%w{json thor angry_hash}.each do |lib|
+%w{json thor angry_hash citrus}.each do |lib|
   root = @root+'vendor'+lib
   $: << (root+'lib')
 end
@@ -33,8 +33,6 @@ class MobCLI < Thor
   attr_reader :config
   def riot
     begin
-      @config = AngryHash[ options ]
-
       load_hooks(config.hooks)
 
       @hooks.pre
@@ -46,7 +44,8 @@ class MobCLI < Thor
       @hooks.attrs( attributes )
 
       AngryMob::Mob.ui = ui   # XXX not threadsafe, but what is?
-      mob_loader = AngryMob::MobLoader.new
+
+      mob_loader = AngryMob::MobLoader.new(attributes)
       
       config.mobs.each {|mob_path| mob_loader.add_mob(mob_path)}
 
@@ -63,11 +62,53 @@ class MobCLI < Thor
     end
   end
 
+  desc 'match_events', 'match initial events against all predicates'
+  method_option :json_file, :type => :string, :required => false
+  method_option :events, :type => :string, :required => true
+  method_option :mobs  , :type => :array , :default => []
+  def match_events
+    attributes = load_attributes
+    events = attributes.fire = [ config.events.split(',') ].flatten.compact
+
+    mob_loader = AngryMob::MobLoader.new(attributes)
+    options.mobs.each {|mob_path| mob_loader.add_mob(mob_path)}
+
+    mob = mob_loader.to_mob
+    mob.act_scheduler.acts.values.select {|act| events.any? {|e| act.match?(e)}}.map {|act| act.name}.tapp
+  end
+
+  desc 'predicates', 'print all predicates'
+  method_option :json_file, :type => :string, :required => false
+  method_option :mobs     , :type => :array , :default => []
+  def predicates
+    attributes = load_attributes
+
+    mob_loader = AngryMob::MobLoader.new(attributes)
+    options.mobs.each {|mob_path| mob_loader.add_mob(mob_path)}
+
+    mob = mob_loader.to_mob
+    cols = mob.act_scheduler.acts.values.sort_by {|act| act.predicate.on}.map {|act| [act.name,act.predicate.on,act.definition_file.to_s.strip]}
+
+    widths = cols.inject([0,0,0]) {|memo,parts|
+      memo[0] = [ memo[0], parts[0].size ].max
+      memo[1] = [ memo[1], parts[1].size ].max
+      memo[2] = [ memo[2], parts[2].size ].max
+      memo
+    }
+
+    fmt = widths.map {|w| "%-#{w}s"} * ' '
+
+    cols.each {|parts| puts fmt % parts}
+  end
+
   protected
+  def config
+    @config ||= AngryHash[ options ]
+  end
   def build_attributes
     attributes = load_attributes
 
-    attributes.acts = [ config.act ]
+    attributes.fire = [ config.act ]
 
     if config.allow_missing_act?
       attributes.raise_on_missing_act = false

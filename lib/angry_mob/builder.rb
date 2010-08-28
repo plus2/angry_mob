@@ -5,6 +5,12 @@ class AngryMob
   class Builder
     include Log
 
+    attr_reader :attributes
+
+    def initialize(attributes)
+      @attributes = attributes
+    end
+
     def self.from_file(path)
       path = Pathname(path)
       new.from_file(path)
@@ -31,12 +37,12 @@ class AngryMob
     def to_mob
       mob = Mob.new
 
-      # pre-setup
+      # pre-setup - combine blocks added
       mob.setup_node = lambda {|node,defaults|
         node_setup_blocks.each {|blk| blk[node,defaults]}
       }
 
-      # in-setup
+      # in-setup - combine blocks added
       mob.node_defaults = lambda {|node,defaults|
         node_default_blocks.each {|blk| blk[node,defaults]}
       }
@@ -45,10 +51,14 @@ class AngryMob
       mob.consolidate_node = @node_consolidation_block
 
       # create and bind acts
-      acts.each do |name,(blk,file,multi)|
-        act = Act.new(name,multi,&blk)
+      acts.each do |(act,definition_file)|
         act.extend helper_mod 
-        act.bind(mob,file)
+        act.bind(mob,definition_file)
+      end
+
+      # bind event processors
+      event_processors.each do |ev_proc|
+        ev_proc.bind(mob)
       end
 
       mob
@@ -57,26 +67,24 @@ class AngryMob
     #### DSL API
 
     # Defines an `act` block
-    def act(name, definition_file=nil, &blk)
-      definition_file ||= file
-      acts[name.to_sym] = [blk,definition_file.dup,false]
+    def act(*args, &blk)
+      act = Act.new(*args,&blk)
+      acts << [act,file.dup]
     end
 
-    def multi_act(name, definition_file=nil, &blk)
-      definition_file ||= file
-      acts[name.to_sym] = [blk,definition_file.dup,true]
+    def multi_act(name, options={}, &blk)
+      options[:multi] = true
+      act = Act.new(name,options,&blk)
+
+      acts << [act,file.dup]
+    end
+
+    def event(*args,&blk)
+      event_processors << AngryMob::Act::EventProcessor.new(*args,&blk)
     end
 
     def act_helper(&blk)
       helper_mod.module_eval(&blk)
-    end
-
-    def finalise(*act_names, &blk)
-      act_names.norm.each {|a| act("finalise/#{a}",&blk)}
-    end
-
-    def notifications_for(name,&blk)
-      act("notifications_for/#{name}") { notifications.for(name, :context => self, &blk) }
     end
 
     # A `setup_node` block allows the mob to set defaults, load resource locators and anything else you like.
@@ -104,12 +112,15 @@ class AngryMob
     end
 
     def acts
-      @acts ||= Dictionary.new
+      @acts ||= []
+    end
+
+    def event_processors
+      @event_processors ||= []
     end
 
     def helper_mod
       @helper_mod ||= Module.new
     end
-
   end
 end
