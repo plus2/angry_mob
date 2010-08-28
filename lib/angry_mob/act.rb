@@ -115,6 +115,7 @@ class AngryMob
 
     protected
     def generate_random_name
+      # TODO take definition file into account!
       "act-#{SecureRandom.hex(10)}"
     end
   end
