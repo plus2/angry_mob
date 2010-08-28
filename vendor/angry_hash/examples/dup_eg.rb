@@ -1,7 +1,6 @@
 require 'eg_helper'
 
-require 'angry_hash/extension_tracking'
-AngryHash.send :include, AngryHash::ExtensionTracking
+require 'angry_hash/extension'
 
 eg.setup do
   @original = { 'database' => {
@@ -42,7 +41,7 @@ end
 
 module Extendo
   def as_dag
-    dag = dup
+    dag = dup_with_extension
     dag
   end
 

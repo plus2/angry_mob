@@ -48,7 +48,8 @@ class AngryHash < Hash
   end
 
   def deep_merge(other_hash)
-    # XXX this should convert other to AHash!
+    other_hash = AngryHash[other_hash]
+
     self.regular_merge( other_hash ) do |key, oldval, newval|
       oldval = AngryHash.__convert_value(oldval)
       newval = AngryHash.__convert_value(newval)

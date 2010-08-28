@@ -133,3 +133,12 @@ eg 'merge with symbol key' do
   Show( merged )
   Assert( merged.keys[1].is_a?(String) )
 end
+
+eg 'merge regression 2' do
+  other = { 'subscriptions' => [{'id' => 'fooper', 'kind' => 'topic', 'key' => 'bloop.*'}] }
+  this  = AngryHash[ :whatever => 'blah blah' ]
+
+  this.deep_update(other)
+
+  Assert( AngryHash === this.subscriptions.first )
+end
