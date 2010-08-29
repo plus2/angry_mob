@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{angry_hash}
-  s.version = "0.2.0"
+  s.version = "0.2.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Lachie Cox"]
-  s.date = %q{2010-08-25}
+  s.date = %q{2010-08-28}
   s.description = %q{A stabler mash with different emphases. Used in plus2 projects AngryMob and Igor.}
   s.email = %q{lachie@plus2.com.au}
   s.extra_rdoc_files = [
@@ -19,7 +19,9 @@ Gem::Specification.new do |s|
   s.files = [
     ".gitignore",
      "Changelog.md",
+     "License",
      "Rakefile",
+     "Readme.md",
      "VERSION",
      "angry_hash.gemspec",
      "lib/angry_hash.rb",
