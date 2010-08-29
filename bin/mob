@@ -101,10 +101,13 @@ class MobCLI < Thor
     cols.each {|parts| puts fmt % parts}
   end
 
-  protected
-  def config
-    @config ||= AngryHash[ options ]
+  no_tasks do
+    def config
+      @config ||= AngryHash[ options ]
+    end
   end
+
+  protected
   def build_attributes
     attributes = load_attributes
 
