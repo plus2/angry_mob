@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-
+require 'open-uri'
 require 'pathname'
 @root = Pathname(__FILE__).dirname.parent.expand_path
 
@@ -105,13 +105,17 @@ class MobCLI < Thor
     def config
       @config ||= AngryHash[ options ]
     end
+
+    def attribute_load_options
+      @attribute_load_options ||= {}
+    end
   end
 
   protected
   def build_attributes
     attributes = load_attributes
 
-    attributes.fire = [ config.act ]
+    attributes.fire = [ config.act, config.events ].flatten.compact
 
     if config.allow_missing_act?
       attributes.raise_on_missing_act = false
@@ -126,9 +130,8 @@ class MobCLI < Thor
     return AngryHash.new unless config.json_file?
 
     if config.json_file.to_s[/^https?:/]
-      require 'net/http'
-      require 'uri'
-      json = Net::HTTP.get(URI.parse(config.json_file))
+      require 'open-uri'
+      json = open(config.json_file, attribute_load_options).read
     else
       json = Pathname(config.json_file.tapp("loading attributes from")).expand_path.read
     end
@@ -141,7 +144,8 @@ class MobCLI < Thor
 
   def load_hooks(file)
     @hooks = MobHooks.new( self, file )
-  end    
+  end
+
 end
 
 
