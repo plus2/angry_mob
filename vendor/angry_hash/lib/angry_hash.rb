@@ -99,24 +99,33 @@ class AngryHash < Hash
     self
   end
 
-  def to_normal_hash
-    __to_hash(self)
+  def to_normal_hash(keys=nil)
+    __to_hash(self,keys)
   end
-  def __to_hash(value,cycle_guard={})
+
+  def __to_hash(value,keys,cycle_guard={})
     return cycle_guard[value.hash] if cycle_guard.key?(value.hash)
 
     case value
     when Hash
       new_hash = cycle_guard[value.hash] = {}
 
-      value.inject(new_hash) do |hash,(k,v)|
-        hash[k] = __to_hash(v,cycle_guard)
-      hash
+      if keys == :symbols
+        # TODO DRY
+        value.inject(new_hash) do |hash,(k,v)|
+          hash[k.to_sym] = __to_hash(v,keys,cycle_guard)
+          hash
+        end
+      else
+        value.inject(new_hash) do |hash,(k,v)|
+          hash[k] = __to_hash(v,keys,cycle_guard)
+          hash
+        end
       end
     when Array
       new_array = cycle_guard[value.hash] = []
 
-      value.each {|v| new_array << __to_hash(v,cycle_guard)}
+      value.each {|v| new_array << __to_hash(v,keys,cycle_guard)}
     else
       value
     end
