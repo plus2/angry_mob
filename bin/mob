@@ -20,7 +20,9 @@ class MobCLI < Thor
   desc 'riot', 'riot the mob'
   method_option :nodename , :type => :string, :required => true
   method_option :json_file, :type => :string, :required => true
-  method_option :act      , :type => :string, :required => true
+
+  method_option :events   , :type => :array
+  method_option :act      , :type => :string
 
   method_option :hooks      , :type => :string
 
