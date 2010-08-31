@@ -45,14 +45,14 @@ class MobCLI < Thor
 
       @hooks.attrs( attributes )
 
-      AngryMob::Mob.ui = ui   # XXX not threadsafe, but what is?
+      AngryMob::Rioter.ui = ui   # XXX not threadsafe, but what is?
 
       mob_loader = AngryMob::MobLoader.new(attributes)
       
       config.mobs.each {|mob_path| mob_loader.add_mob(mob_path)}
 
-      mob = mob_loader.to_mob
-      mob.riot!( config.nodename, attributes )
+      rioter = mob_loader.to_rioter
+      rioter.riot!( config.nodename, attributes )
 
     rescue
       $stdout.flush
@@ -75,8 +75,8 @@ class MobCLI < Thor
     mob_loader = AngryMob::MobLoader.new(attributes)
     options.mobs.each {|mob_path| mob_loader.add_mob(mob_path)}
 
-    mob = mob_loader.to_mob
-    mob.act_scheduler.acts.values.select {|act| events.any? {|e| act.match?(e)}}.map {|act| act.name}.tapp
+    rioter = mob_loader.to_rioter
+    rioter.act_scheduler.acts.values.select {|act| events.any? {|e| act.match?(e)}}.map {|act| act.name}.tapp
   end
 
   desc 'predicates', 'print all predicates'
@@ -88,7 +88,7 @@ class MobCLI < Thor
     mob_loader = AngryMob::MobLoader.new(attributes)
     options.mobs.each {|mob_path| mob_loader.add_mob(mob_path)}
 
-    mob = mob_loader.to_mob
+    rioter = mob_loader.to_rioter
     cols = mob.act_scheduler.acts.values.sort_by {|act| act.predicate.on}.map {|act| [act.name,act.predicate.on,act.definition_file.to_s.strip]}
 
     widths = cols.inject([0,0,0]) {|memo,parts|

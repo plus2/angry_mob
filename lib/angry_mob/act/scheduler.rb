@@ -2,10 +2,10 @@ class AngryMob
   class Act
     class Scheduler
       attr_writer :node
-      attr_reader :acted, :mob, :event_processors
+      attr_reader :acted, :rioter, :event_processors
 
-      def initialize(mob)
-        @mob = mob
+      def initialize(rioter)
+        @rioter = rioter
         @event_queue = []
         @event_processors = []
         reset!
@@ -94,7 +94,7 @@ class AngryMob
         available_acts[name.to_s] = act
       end
 
-      def ui; @mob.ui end
+      def ui; @rioter.ui end
 
       def reset!
         %w{ seed_events available_acts acted_acts }.each {|ivar| instance_variable_set("@#{ivar}", nil)}
@@ -118,7 +118,7 @@ class AngryMob
       end
 
       def raise_on_missing_act?
-        !( FalseClass === mob.node.raise_on_missing_act )
+        !( FalseClass === rioter.node.raise_on_missing_act )
       end
 
       def act_missing!(name)

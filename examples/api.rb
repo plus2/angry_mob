@@ -3,7 +3,7 @@ require 'angry_mob'
 #mob = AngryMob::Builder.new do
 #end.to_mob
 
-mob = AngryMob::Mob.new
+mob = AngryMob::Rioter.new
 
 class ServiceTarget < AngryMob::SingletonTarget
   nickname :service

@@ -8,6 +8,7 @@ require 'angry_mob/extend'
 
 class AngryMob
   autoload :Mob            , 'angry_mob/mob'
+  autoload :Rioter         , 'angry_mob/rioter'
   autoload :Node           , 'angry_mob/node'
 
   autoload :Target         , 'angry_mob/target'

@@ -1,10 +1,10 @@
 class AngryMob
   class Target
     class Mother
-      attr_reader :mob
+      attr_reader :rioter
 
-      def initialize(mob)
-        @mob = mob
+      def initialize(rioter)
+        @rioter = rioter
       end
 
       def target_classes

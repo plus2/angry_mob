@@ -5,9 +5,12 @@ class AngryMob
     autoload :Predicate     , "angry_mob/act/predicate"
     autoload :EventProcessor, "angry_mob/act/event_processor"
 
-    attr_reader :mob, :name, :definition_file, :options, :predicate
+    attr_reader :mob, :rioter, :name, :definition_file, :options, :predicate
 
-    def initialize(*args,&blk)
+    NullMobInstance = NullMob.new
+
+    def initialize(mob,*args,&blk)
+      @mob     = mob
       @options = args.extract_options!
       @name    = args.shift || generate_random_name
 
@@ -27,7 +30,6 @@ class AngryMob
     end
 
     def ui; mob.ui end
-
     def log(message); mob.ui.log message end
 
     def multi?; !!@multi end
@@ -36,19 +38,12 @@ class AngryMob
       @predicate.match?(event)
     end
 
-    # Binds the act to the mob and the file from which it came.
-    def bind(mob,file)
-      @mob  = mob
+    # Binds the act to the rioter and the file from which it came.
+    def bind(rioter,file)
+      @rioter          = rioter
       @definition_file = file
 
-      mob.act_scheduler.add_act @name, self
-    end
-
-    # XXX is this used?
-    def self.synthesise(mob,name,&blk)
-      act = new(name,true,&blk)
-      act.bind(mob,"name")
-      act.run!
+      rioter.act_scheduler.add_act @name, self
     end
 
     #### Compilation
@@ -77,7 +72,7 @@ class AngryMob
 
     # Schedules a target, adding call-location context along the way.
     def __run_target(nickname,*args,&blk)
-      call = mob.target_mother.target_call(nickname,*args,&blk)
+      call = rioter.target_mother.target_call(nickname,*args,&blk)
 
       call.merge_defaults(defaults.defaults_for(nickname))
       call.call(self)
@@ -86,8 +81,8 @@ class AngryMob
     end
 
     def in_sub_act(*args,&blk)
-      sub_act = self.class.new("sub-act-#{name}", {:multi => true}, &blk)
-      sub_act.bind(@mob,@definition_file)
+      sub_act = self.class.new(NullMobInstance, "sub-act-#{name}", {:multi => true}, &blk)
+      sub_act.bind(rioter,@definition_file)
       sub_act.run!(*args)
     end
 
@@ -98,15 +93,15 @@ class AngryMob
     end
 
     def node
-      mob.node
+      rioter.node
     end
 
     def act_now act_name, *args
-      mob.act_scheduler.act_now act_name, *args
+      rioter.act_scheduler.act_now act_name, *args
     end
 
     def fire event_name
-      mob.act_scheduler.fire event_name
+      rioter.act_scheduler.fire event_name
     end
 
     def schedule_act act_name
@@ -116,7 +111,7 @@ class AngryMob
     protected
     def generate_random_name
       if definition_file
-        "act-#{definition_file.split('/').last.gsub(/[^A-Za-z0-9]+/,'-'}-#{SecureRandom.hex(10)}"
+        "act-#{Util.snake_case(definition_file.split('/').last)}-#{SecureRandom.hex(10)}"
       else
         "act-#{SecureRandom.hex(10)}"
       end

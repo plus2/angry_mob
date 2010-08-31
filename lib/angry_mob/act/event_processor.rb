@@ -9,9 +9,9 @@ class AngryMob
         @block   = blk
       end
 
-      def bind(mob)
-        @mob = mob
-        mob.act_scheduler.event_processors << self
+      def bind(rioter)
+        @rioter = rioter
+        rioter.act_scheduler.event_processors << self
       end
 
       def call(queue)

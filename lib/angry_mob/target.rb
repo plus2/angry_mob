@@ -64,8 +64,9 @@ class AngryMob
     attr_reader :args, :current_action
     attr_accessor :act
 
-    def mob; act.mob end
-    def ui ; mob.ui  end
+    def mob   ; act.mob    end
+    def rioter; act.rioter end
+    def ui    ; mob.ui     end
 
     def log(message); mob.ui.log message end
 
@@ -179,13 +180,13 @@ class AngryMob
     end
 
     def node
-      mob.node
+      rioter.node
     end
 
     # Called when the state has changed.
     # Very simply delegates event to the act scheduler
     def fire!
-      mob.act_scheduler.fire(args.fire) if args.fire.present?
+      rioter.act_scheduler.fire(args.fire) if args.fire.present?
     end
 
     # Give the target itself a neat place to react to changes.

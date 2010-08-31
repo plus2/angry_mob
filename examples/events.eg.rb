@@ -36,7 +36,7 @@ eg.setup do
     ui.log "hello post-restart-not-run"
   end
 
-  @mob = AngryMob::Mob.new
+  @mob = AngryMob::Rioter.new
   acts.each {|a| a.bind(@mob,'eg')}
 end
 

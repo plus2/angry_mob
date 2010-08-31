@@ -5,7 +5,7 @@ class AngryMob
   class Builder
     include Log
 
-    attr_reader :attributes
+    attr_reader :attributes, :mob
 
     def initialize(attributes)
       @attributes = attributes
@@ -27,54 +27,59 @@ class AngryMob
     end
 
     # read and evaluate a file in builder context
-    def from_file(path)
+    def from_file(mob,path)
+      @mob  = mob
       @file = path
+
       instance_eval path.read, path.to_s
-      @file = nil
+
       self
+    ensure
+      @mob  = nil
+      @file = nil
     end
 
-    def to_mob
-      mob = Mob.new
+    def to_rioter
+      rioter = Rioter.new
 
       # pre-setup - combine blocks added
-      mob.setup_node = lambda {|node,defaults|
+      rioter.setup_node = lambda {|node,defaults|
         node_setup_blocks.each {|blk| blk[node,defaults]}
       }
 
       # in-setup - combine blocks added
-      mob.node_defaults = lambda {|node,defaults|
+      rioter.node_defaults = lambda {|node,defaults|
         node_default_blocks.each {|blk| blk[node,defaults]}
       }
 
       # post-setup
-      mob.consolidate_node = @node_consolidation_block
+      rioter.consolidate_node = @node_consolidation_block
 
       # create and bind acts
       acts.each do |(act,definition_file)|
         act.extend helper_mod 
-        act.bind(mob,definition_file)
+        act.bind(rioter,definition_file)
       end
 
       # bind event processors
       event_processors.each do |ev_proc|
-        ev_proc.bind(mob)
+        ev_proc.bind(rioter)
       end
 
-      mob
+      rioter
     end
 
     #### DSL API
 
     # Defines an `act` block
     def act(*args, &blk)
-      act = Act.new(*args,&blk)
+      act = Act.new(mob,*args,&blk)
       acts << [act,file.dup]
     end
 
     def multi_act(name, options={}, &blk)
       options[:multi] = true
-      act = Act.new(name,options,&blk)
+      act = Act.new(mob,name,options,&blk)
 
       acts << [act,file.dup]
     end
@@ -87,7 +92,7 @@ class AngryMob
       helper_mod.module_eval(&blk)
     end
 
-    # A `setup_node` block allows the mob to set defaults, load resource locators and anything else you like.
+    # A `setup_node` block allows the rioter to set defaults, load resource locators and anything else you like.
     def setup_node(&blk)
       node_setup_blocks << blk
     end
