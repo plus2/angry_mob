@@ -115,8 +115,11 @@ class AngryMob
 
     protected
     def generate_random_name
-      # TODO take definition file into account!
-      "act-#{SecureRandom.hex(10)}"
+      if definition_file
+        "act-#{definition_file.split('/').last.gsub(/[^A-Za-z0-9]+/,'-'}-#{SecureRandom.hex(10)}"
+      else
+        "act-#{SecureRandom.hex(10)}"
+      end
     end
   end
 end
