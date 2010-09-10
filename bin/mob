@@ -133,7 +133,16 @@ class MobCLI < Thor
 
     if config.json_file.to_s[/^https?:/]
       require 'open-uri'
-      json = open(config.json_file, attribute_load_options).read
+      require 'net/https'
+
+      json = begin
+        original_peer = OpenSSL::SSL::VERIFY_PEER
+        OpenSSL::SSL.const_set('VERIFY_PEER', OpenSSL::SSL::VERIFY_NONE)
+
+        open(config.json_file, attribute_load_options).read
+      ensure
+        OpenSSL::SSL.const_set('VERIFY_PEER', original_peer)
+      end
     else
       json = Pathname(config.json_file.tapp("loading attributes from")).expand_path.read
     end
