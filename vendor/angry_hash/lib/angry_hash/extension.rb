@@ -1,10 +1,4 @@
-require 'angry_hash'
-
 class AngryHash
-  def self.new_extended(mod,seed={})
-    self[ seed ].tap {|hash| hash.extend(mod) }
-  end
-
   module Extension
     class << self
       def included(base)
@@ -49,7 +43,13 @@ class AngryHash
         mixin_registry[target_class][field.to_s] = [:hash, mod, options]
       end
 
-      def extend_hash(hash, mod, parent_hash)
+      # Register a block extension - applied to objects of the defining module.
+      # This is in contrast to the other mixin types which are applied to subordinate objects.
+      def register_mixin_block(target_class, options)
+        mixin_registry[target_class]['*'] = [:block, options]
+      end
+
+      def extend_hash(hash, mod, parent_hash, block)
         if !parent_hash.nil? && hash.nil?
           hash = AngryHash.new
         end
@@ -57,6 +57,11 @@ class AngryHash
         hash.extend mod
 
         hash.__parent_hash = parent_hash if hash.respond_to?(:__parent_hash=)
+
+        if block
+          hash.instance_eval(&block)
+        end
+
         hash
       end
 
@@ -71,29 +76,44 @@ class AngryHash
         if mixin = mixin_registry[extension][field.to_s]
           kind,mod,options = *mixin
 
+          if options[:allow_nil] && obj.nil?
+            return nil
+          end
+
           if options.key?(:default) && obj.nil?
             obj = options[:default]
           end
 
+
+
+          # the result of `extend_self` block
+          extend_self = if (sub_ext = mixin_registry[mod]['*']) && sub_ext[0] == :block
+                          sub_ext[1][:block]
+                        end
+
           case kind
           when :single
-            obj = extend_hash(obj,mod,parent_obj)
+            obj = extend_hash(obj,mod,parent_obj,extend_self)
           when :array
             # XXX - this is ok for now... we really need to typecheck, perhaps wrap in a smart-array
             obj ||= []
-            obj = obj.map {|elt| extend_hash(elt, mod, parent_obj)}
+            obj = obj.map! {|elt| extend_hash(elt, mod, parent_obj, extend_self) }
           when :hash
             obj ||= {}
-            obj = obj.inject(AngryHash.new) do |h,(k,elt)|
-              h[k] = extend_hash(elt,mod,parent_obj)
+            obj.replace( obj.inject(AngryHash.new) {|h,(k,elt)|
+              h[k] = extend_hash(elt,mod,parent_obj, extend_self)
               h
-            end
+            })
           end
+          
+          
         end
 
         obj
       end
-    end
+    end # Extension module methods
+
+    ## Instance methods
 
     def [](key)
       Extension.mixin_to(self,key,super)
@@ -125,6 +145,7 @@ class AngryHash
       @__angry_hash_extension
     end
 
+
     module ClassMethods
       def defaults(default_form=nil)
         if default_form
@@ -149,6 +170,11 @@ class AngryHash
 
       def extend_hash(field,mod,options={})
         Extension.register_mixin_hash(self,field,mod,options)
+      end
+
+      def extend_self(options={}, &block)
+        options[:block] = block
+        Extension.register_mixin_block(self,options)
       end
 
       def build(seed={})

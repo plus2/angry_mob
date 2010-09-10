@@ -1,80 +1,49 @@
-
 class AngryHash < Hash
+  require 'angry_hash/conversion/by_reference'
+  require 'angry_hash/conversion/duplicating'
+  require 'angry_hash/extension'
+  require 'angry_hash/extension_aware'
+  require 'angry_hash/merging'
+  require 'angry_hash/initialiser'
+
   # config
   require 'angry_hash/dsl'
   include AngryHash::DSL
 
-  def self.[](other=nil)
-    if other
-      super(__convert(other))
-    else
-      new
-    end
-  end
+  extend AngryHash::Initialiser
+
 
   alias_method :regular_writer, :[]=    unless method_defined?(:regular_writer)
   alias_method :regular_reader, :[]     unless method_defined?(:regular_reader)
   alias_method :regular_update, :update unless method_defined?(:regular_update)
 
+  # store value under key, without dup-ing.
   def []=(key, value)
-    regular_writer(__convert_key(key), self.class.__convert_value_without_dup(value))
+    regular_writer(__convert_key(key), __convert_value_without_dup(value))
   end
 
+  # fetch value stored under key.
   def [](key)
     regular_reader(__convert_key(key))
   end
 
+  # override id to fetch value stored under 'id'.
   def id
     regular_reader('id')
   end
 
+  # store value under key by duping the value.
   def dup_and_store(key,value)
-    regular_writer(__convert_key(key), self.class.__convert_value(value))
+    regular_writer(__convert_key(key), __convert_value(value))
   end
 
-  alias_method :regular_merge, :merge unless method_defined?(:regular_merge)
-  def merge(hash)
-    regular_merge(self.class.__convert_without_dup(hash))
-  end
-
-  def merge!(other_hash)
-    other_hash.each_pair { |key, value| dup_and_store(key,value) }
-    self
-  end
-  alias_method :update, :merge!
-
+  # Duplicate the AngryHash
   def dup
     self.class[ self ]
   end
 
-  def deep_merge(other_hash)
-    other_hash = AngryHash[other_hash]
 
-    self.regular_merge( other_hash ) do |key, oldval, newval|
-      oldval = AngryHash.__convert_value(oldval)
-      newval = AngryHash.__convert_value(newval)
-
-      AngryHash === oldval && AngryHash === newval ? oldval.deep_merge(newval) : newval
-    end
-  end
-
-  def deep_merge!(other_hash)
-    replace(deep_merge(other_hash))
-    self
-  end
-  alias_method :deep_update, :deep_merge!
-
-  def reverse_deep_merge(other_hash)
-    self.class.__convert_value(other_hash).deep_merge(self)
-  end
-
-  def reverse_deep_merge!(other_hash)
-    replace(reverse_deep_merge(other_hash))
-    self
-  end
-  alias_method :reverse_deep_update, :reverse_deep_merge!
-
-
+  # override normal Hash methods
 
   def key?(key)
     super(__convert_key(key))
@@ -98,6 +67,8 @@ class AngryHash < Hash
   def to_hash
     self
   end
+
+  ## Convert back to a plain hash
 
   def to_normal_hash(keys=nil)
     __to_hash(self,keys)
@@ -132,6 +103,7 @@ class AngryHash < Hash
   end
 
 
+  # Support dot notation access
   def method_missing(method,*args,&blk)
     method_s = method.to_s
 
@@ -157,6 +129,7 @@ class AngryHash < Hash
     end
   end
 
+  # please be Strings
   def __convert_key(key)
     Symbol === key ? key.to_s : key
   end
@@ -164,67 +137,8 @@ class AngryHash < Hash
     Symbol === key ? key.to_s : key
   end
 
-
-  # non-duplicating convert
-  def self.__convert_without_dup(hash)
-    hash.inject(AngryHash.new) do |newhash,(k,v)|
-      newhash[__convert_key(k)] = __convert_value_without_dup(v)
-      newhash
-    end
-  end
-
-  def self.__convert_value_without_dup(v)
-    v = v.to_hash if v.respond_to?(:to_hash)
-
-    case v
-    when AngryHash
-      v
-    when Hash
-      __convert_without_dup(v)
-    when Array
-      v.map {|vv| __convert_value_without_dup(vv)}
-    else
-      v
-    end
-  end
-
-
-  # duplicating convert
-  def self.__convert(hash,cycle_watch=[])
-    new_hash = hash.inject(AngryHash.new) do |hash,(k,v)|
-      hash.regular_writer( __convert_key(k), __convert_value(v,cycle_watch) )
-      hash
-    end
-
-    new_hash
-  end
-
-  def self.__convert_value(v,cycle_watch=[])
-    id = v.__id__
-
-    return if cycle_watch.include? id
-
-    begin
-      cycle_watch << id
-
-      original_v = v
-      v = v.to_hash if v.respond_to?(:to_hash)
-
-      case v
-      when Hash
-        __convert(v,cycle_watch)
-      when Array
-        v.map {|vv| __convert_value(vv,cycle_watch)}
-      when Fixnum,Symbol,NilClass,TrueClass,FalseClass,Float,Bignum
-        v
-      else
-        v.dup
-      end
-    ensure
-      cycle_watch.pop
-    end
-  end
-  
+  include Merging
+  include Conversion::Duplicating
+  include Conversion::ByReference
+  include ExtensionAware
 end
-
-
