@@ -1,5 +1,5 @@
 require 'eg_helper'
-require 'angry_hash/extension'
+require 'angry_hash'
 
 module Fixtures
   module CreditCard
@@ -103,4 +103,60 @@ eg 'extensions persist with dup_with_extension' do
   Assert(   new_user.credit_card.number == 123 )
   Assert(   new_user.credit_card.valid? )
   Assert( defined?( new_user.credit_card.valid? ) == 'method' )
+end
+
+def same_obj(a,b)
+  a.__id__ == b.__id__
+end
+
+eg 'extensions persist after deep_merge' do
+  user = AngryHash[ :name => 'Bob', :credit_card => {:number => 123}, :phone_numbers => {:home => {:number => '+41 0404555111'}} ]
+  user.extend Fixtures::User
+
+  Assert( user.phone_numbers.home.country_code == 41 )
+
+  new_user = user.deep_merge(:credit_card => {:number => 456})
+
+  Assert( new_user.phone_numbers.home.country_code == 41 )
+
+  Assert( ! same_obj( user.__id__, new_user.__id__ ) )
+  Assert( ! same_obj( user.phone_numbers.home.__id__, new_user.phone_numbers.home.__id__ ) )
+
+  Assert( new_user.credit_card.number == 456 )
+  Assert( new_user.phone_numbers.home.country_code == 41 )
+end
+
+eg 'extensions persist after reverse_deep_merge' do
+  user = AngryHash[ :name => 'Bob', :credit_card => {:number => 123}, :phone_numbers => {:home => {:number => '+41 0404555111'}} ]
+  user.extend Fixtures::User
+
+  Assert( user.phone_numbers.home.country_code == 41 )
+
+  # Do the reverse_deep_merge
+  new_user = user.reverse_deep_merge(:credit_card => {:number => 456})
+
+  Assert( new_user.phone_numbers.home.country_code == 41 )
+
+  Assert( ! same_obj( user.__id__, new_user.__id__ ) )
+  Assert( ! same_obj( user.phone_numbers.home.__id__, new_user.phone_numbers.home.__id__ ) )
+
+  Assert( new_user.credit_card.number == 123 )
+  Assert( new_user.phone_numbers.home.country_code == 41 )
+end
+
+eg 'extensions persist after AngryHash[]' do
+  user = AngryHash[ :name => 'Bob', :credit_card => {:number => 123}, :phone_numbers => {:home => {:number => '+41 0404555111'}} ]
+  user.extend Fixtures::User
+
+  user.__angry_hash_extension.tapp(:ahe)
+
+  num = user.phone_numbers.home
+  num.__angry_hash_extension.tapp(:ahe)
+  
+  Assert(num.country_code == 41)
+
+  args = AngryHash[ :nothing_special => {:phone => user.phone_numbers.home} ]
+
+  Show(args)
+  Assert(args.nothing_special.phone.country_code == 41)
 end
