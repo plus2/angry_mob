@@ -41,13 +41,14 @@ class AngryMob
         @actions = array.norm.map{|s| s.to_s}
       end
 
+      # XXX needs to preserve extensions!
       def extract_args(args,&blk)
         args.flatten!
 
         case args.size
         when 0,1
           if Hash === args[0]
-            new_args = AngryHash.__convert_without_dup(args[0])
+            new_args = AngryHash.dup_with_extension(args[0])
             new_args.default_object = new_args
           else
             new_args = AngryHash.new
@@ -55,7 +56,7 @@ class AngryMob
           end
 
         when 2
-          new_args = AngryHash.__convert_without_dup(args[1])
+          new_args = AngryHash.dup_with_extension(args[1])
           new_args.default_object = args[0]
 
         else
