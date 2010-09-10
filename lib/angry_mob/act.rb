@@ -8,6 +8,7 @@ class AngryMob
     attr_reader :mob, :rioter, :name, :definition_file, :options, :predicate
 
     NullMobInstance = NullMob.new
+    BlankAct = lambda {|*|}
 
     def initialize(mob,*args,&blk)
       @mob     = mob
@@ -15,7 +16,7 @@ class AngryMob
       @name    = args.shift || generate_random_name
 
       @multi   = !! options.delete(:multi)
-      @blk     = blk
+      @blk     = block_given? ? blk : BlankAct
 
       parse_predicate!
     end
