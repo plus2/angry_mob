@@ -1,5 +1,7 @@
 class AngryMob
   class Target
+    ## Target subclass tracking.
+    # Inspired & stolen from `thor`.
     module Tracking
       class << self
         def included(base) #:nodoc:
@@ -17,7 +19,7 @@ class AngryMob
         end
 
         # Whenever a class inherits from AngryMob::Target, we should track the
-        # class and the file on AngryMob::Target::Tracking. This is the method responsable for it.
+        # class and the file on AngryMob::Target::Tracking. This is the method responsible for it.
         #
         def register_klass_file(klass) #:nodoc:
           file = caller[1].match(/(.*):\d+/)[1]
@@ -38,7 +40,7 @@ class AngryMob
         end
 
         # Fire this callback whenever a method is added. Added methods are
-        # tracked as tasks by invoking the create_task method.
+        # tracked as actions by invoking the create_action method.
         def method_added(meth)
           meth = meth.to_s
 

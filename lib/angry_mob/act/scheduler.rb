@@ -25,8 +25,6 @@ class AngryMob
         exhaust_queue
 
         ui.good "finished running acts"
-
-        # finalise_acts!
       end
 
       def act_now(act_name,*arguments)

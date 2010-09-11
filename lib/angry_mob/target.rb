@@ -62,11 +62,14 @@ class AngryMob
     end
 
     attr_reader :args, :current_action
+
+    # convenience accessors
     attr_accessor :act
 
-    def mob   ; act.mob    end
-    def rioter; act.rioter end
-    def ui    ; mob.ui     end
+    def mob   ; act.mob     end
+    def rioter; act.rioter  end
+    def ui    ; mob.ui      end
+    def node  ; rioter.node end
 
     def log(message); mob.ui.log message end
 
@@ -179,9 +182,6 @@ class AngryMob
       @before_state ||= state
     end
 
-    def node
-      rioter.node
-    end
 
     # Called when the state has changed.
     # Very simply delegates event to the act scheduler

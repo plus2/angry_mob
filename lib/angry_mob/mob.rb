@@ -1,15 +1,14 @@
 class AngryMob
   class NullMob
-    def ui
-      Rioter.ui
-    end
+    def ui ; Rioter.ui end
   end
 
+  ## Mob
+  # A collection of acts, targets and supporting libraries.
+  #
   # TODO add different kinds of mobs: path, gem, git
   class Mob
-    def ui
-      Rioter.ui
-    end
+    def ui; Rioter.ui end
 
     attr_reader :path, :name, :loader
 
@@ -27,11 +26,13 @@ class AngryMob
 
         mob_root = path
 
+        # Take load directions from `loader_file`
         loader_file = path+'load_mob.rb'
 
         if loader_file.exist?
           instance_eval(loader_file.read,loader_file.to_s)
         else
+          # Otherwise, assume a default layout.
           load_lib(path    +'lib')
           load_targets(path+'targets')
           load_acts(path   +'acts')
@@ -48,10 +49,12 @@ class AngryMob
 
     # API
 
+    # Ensure the mob `name` is loaded before this one.
     def depends_on_mob(name)
       loader.load_mob_named(name)
     end
 
+    # Load all targets under `path`
     def load_targets(path=nil)
       path ||= self.path + 'targets'
 
@@ -64,6 +67,7 @@ class AngryMob
       end
     end
 
+    # Add `path` to the load path
     def load_lib(path=nil)
       path ||= self.path + 'lib'
 
@@ -73,6 +77,7 @@ class AngryMob
       $LOAD_PATH << path
     end
 
+    # Load all acts under `path`
     def load_acts(path=nil)
       path ||= self.path + 'acts'
 
@@ -84,6 +89,7 @@ class AngryMob
       end
     end
 
+    # Load acts from the file at `path`.
     def load_act_file(path)
       raise "act file at path #{path} didn't exist" unless path.exist?
       ui.log "loading acts from #{path}"

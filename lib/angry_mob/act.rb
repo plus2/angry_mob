@@ -75,7 +75,8 @@ class AngryMob
       __run_target(nickname,*args,&blk)
     end
 
-    # Schedules a target, adding call-location context along the way.
+    # Locates and calls a `Target::Call` (which wraps a `Target`).
+    # The wrapped `Target` is returned.
     def __run_target(nickname,*args,&blk)
       call = rioter.target_mother.target_call(nickname,*args,&blk)
 
