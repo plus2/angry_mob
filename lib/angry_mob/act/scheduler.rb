@@ -53,7 +53,7 @@ class AngryMob
       end
 
       def fire(event)
-        ui.task "firing '#{event}'"
+        ui.sigil '->', event, :green
         @event_queue.unshift event
 
         # process the eq
@@ -62,9 +62,11 @@ class AngryMob
 
       def exhaust_queue
         while event = @event_queue.pop do
-          ui.log "popped event #{event}"
+          ui.sigil '<-', event, :green
 
           acts = available_acts.values.select {|act| act.match?(event)}
+
+          acts.map {|a| a.name}
 
           acts.each do |act|
             next if acted?(act)

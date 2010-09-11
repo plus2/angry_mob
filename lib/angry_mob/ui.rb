@@ -129,7 +129,11 @@ class AngryMob
     end
 
     def task(message)
-      isay ">> ", :blue
+      sigil('>>', message)
+    end
+
+    def sigil(sigil,message,colour=:blue)
+      isay "#{sigil} ", colour
       say message
     end
 
