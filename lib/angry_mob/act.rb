@@ -54,7 +54,11 @@ class AngryMob
       ui.push("act '#{name}'", :bubble => true) do
         @running = true
 
-        instance_exec *arguments, &@blk
+        begin
+          instance_exec *arguments, &@blk
+        rescue
+          raise_runtime_error($!)
+        end
 
         @running = false
       end
@@ -85,6 +89,44 @@ class AngryMob
       sub_act = self.class.new(NullMobInstance, "sub-act-#{name}", {:multi => true}, &blk)
       sub_act.bind(rioter,@definition_file)
       sub_act.run!(*args)
+    end
+
+    def raise_runtime_error(exception)
+      bt = $!.backtrace
+      act_line = bt.find {|line| line[/^#{this_file}:\d+:in `instance_exec'$/]}
+      act_index = bt.rindex(act_line)
+
+      file,line,method = *bt[act_index-1].split(':')
+
+      file = Pathname(file)
+      line = line.to_i
+
+      relative_file = file.relative_path_from(mob.path)
+
+      ui.bad "Problem running #{mob.name}#{name} #{relative_file} at line #{line+1}"
+
+      begin
+        extract_code(file,line).each {|line| ui.bad line.rstrip.chomp}
+      rescue
+        puts "unable to extract code"
+        ui.exception!($!)
+      end
+
+      raise $!
+    end
+
+    def extract_code(file,line,context=3)
+      lines = file.open.readlines
+      from  = [ line-3, 0 ].max
+      to    = [ line+3, lines.size-1 ].min
+
+      (from..to).map do |i|
+        "%s %3d %s" % [(i==line ? '>':' '),i+1,lines[i]]
+      end
+    end
+
+    def this_file
+      File.expand_path(__FILE__)
     end
 
     #### Definition helpers
