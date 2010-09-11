@@ -1,4 +1,5 @@
 class AngryHash
+  ## Adds extension awareness to core AngryHash copying methods
   module ExtensionAware
     def self.included(base)
       base.extend ClassMethods
@@ -31,8 +32,16 @@ class AngryHash
         end
       end
 
-      def copy_extension(from,to)
-        to.tap {|t| t.extend(from.__angry_hash_extension) if from.respond_to?(:__angry_hash_extension)}
+      def copy_extension(from,to_hash)
+        to_hash.tap {|to| 
+          to.extend(from.__angry_hash_extension) if from.respond_to?(:__angry_hash_extension)
+          to.__parent_hash = from.__parent_hash  if to.respond_to?(:__parent_hash=) && from.respond_to?(:__parent_hash)
+        }
+      end
+
+      # Given a hash, detect whether it's extended & by which module.
+      def extended_with(hash)
+        hash.__angry_hash_extension if hash.respond_to?(:__angry_hash_extension)
       end
     end
 

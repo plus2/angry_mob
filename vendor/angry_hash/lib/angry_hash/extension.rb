@@ -125,10 +125,12 @@ class AngryHash
 
     def dup_with_extension
       dup.tap {|new_hash|
-        new_hash.extend(__angry_hash_extension) if __angry_hash_extension
+        AngryHash.copy_extension(self,new_hash)
       }
     end
 
+    ## AngryHash extension attributes
+    # These should be copied using `AngryHash.copy_extension` when duping
     def __parent_hash=(hash)
       @__parent_hash = hash
     end
