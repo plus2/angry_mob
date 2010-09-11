@@ -18,17 +18,21 @@ class AngryMob
 
         if on = options[:on]
           on_string = on.to_s
+
+        # `:on_all` is a shortcut `and`ing all supplied predicates
         elsif on_all = options[:on_all]
           if on_all.empty?
             return NoPredicate.new
           else
-            on_string = on_all.join(' && ')
+            on_string = '(' + on_all.join(') && (') + ')'
           end
+
+        # `:on_any` is a shortcut `or`ing all supplied predicates
         elsif on_any = options[ :on_any ]
           if on_any.empty?
             return NoPredicate.new
           else
-            on_string = on_any.join(' || ')
+            on_string = '(' + on_any.join(') || (') + ')'
           end
         end
 
