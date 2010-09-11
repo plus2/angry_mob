@@ -12,11 +12,15 @@ class AngryMob
       end
 
       def run!
+        # fire initial events
         seed_events.each do |event|
           fire event
         end
+
+        # schedule events until the event queue is empty
         exhaust_queue
 
+        # finalisation phase: fire the finalise event and exhaust the queue again
         fire 'finalise'
         exhaust_queue
 
