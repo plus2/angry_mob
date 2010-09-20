@@ -122,7 +122,7 @@ class AngryMob
       to    = [ line+3, lines.size-1 ].min
 
       (from..to).map do |i|
-        "%s %3d %s" % [(i==line ? '>':' '),i+1,lines[i]]
+        "%s %3d %s" % [(i+1==line ? '>':' '),i+1,lines[i]]
       end
     end
 
