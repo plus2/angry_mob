@@ -1,6 +1,7 @@
 class AngryMob
   class NullMob
     def ui ; Rioter.ui end
+    def path; '' end
   end
 
   ## Mob
