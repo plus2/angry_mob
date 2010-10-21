@@ -1,3 +1,5 @@
+require 'bigdecimal'
+
 class AngryHash
   module Conversion
     module Duplicating

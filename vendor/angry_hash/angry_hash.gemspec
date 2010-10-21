@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{angry_hash}
-  s.version = "0.2.2"
+  s.version = "0.3.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Lachie Cox"]
-  s.date = %q{2010-08-30}
+  s.date = %q{2010-10-22}
   s.description = %q{A stabler mash with different emphases. Used in plus2 projects AngryMob and Igor.}
   s.email = %q{lachie@plus2.com.au}
   s.extra_rdoc_files = [
@@ -25,9 +25,14 @@ Gem::Specification.new do |s|
      "VERSION",
      "angry_hash.gemspec",
      "lib/angry_hash.rb",
+     "lib/angry_hash/conversion/by_reference.rb",
+     "lib/angry_hash/conversion/duplicating.rb",
      "lib/angry_hash/dsl.rb",
      "lib/angry_hash/extension.rb",
-     "lib/angry_hash/merge_string.rb"
+     "lib/angry_hash/extension_aware.rb",
+     "lib/angry_hash/initialiser.rb",
+     "lib/angry_hash/merge_string.rb",
+     "lib/angry_hash/merging.rb"
   ]
   s.homepage = %q{http://github.com/plus2/angry_hash}
   s.rdoc_options = ["--charset=UTF-8"]
@@ -40,7 +45,7 @@ Gem::Specification.new do |s|
      "examples/dsl.eg.rb",
      "examples/dup_eg.rb",
      "examples/eg_helper.rb",
-     "examples/extension_tracking.rb",
+     "examples/extension_tracking.eg.rb",
      "examples/merge_eg.rb",
      "examples/normal_hash.eg.rb"
   ]
