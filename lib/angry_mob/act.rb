@@ -87,7 +87,7 @@ class AngryMob
     end
 
     def in_sub_act(*args,&blk)
-      sub_act = self.class.new(NullMobInstance, "sub-act-#{name}", {:multi => true}, &blk)
+      sub_act = self.class.new(NullMobInstance, "#{name}-sub-#{generate_random_name}", {:multi => true}, &blk)
       sub_act.bind(rioter,@definition_file)
       sub_act.run!(*args)
     end
@@ -104,7 +104,7 @@ class AngryMob
 
       relative_file = file.relative_path_from(mob.path)
 
-      ui.bad "Problem running #{mob.name}#{name} #{relative_file} at line #{line+1}"
+      ui.bad "Problem running #{mob.name}:#{name} #{relative_file} at line #{line+1}"
 
       begin
         extract_code(file,line).each {|line| ui.bad line.rstrip.chomp}
@@ -155,7 +155,7 @@ class AngryMob
     protected
     def generate_random_name
       if definition_file
-        "act-#{Util.snake_case(definition_file.split('/').last)}-#{SecureRandom.hex(10)}"
+        "act-#{Util.snake_case(definition_file.to_s.split('/').last)}-#{SecureRandom.hex(10)}"
       else
         "act-#{SecureRandom.hex(10)}"
       end
