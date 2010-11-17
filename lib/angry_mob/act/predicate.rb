@@ -17,7 +17,11 @@ class AngryMob
         options = Hash === definition.last ? definition.last : {}
 
         if on = options[:on]
-          on_string = on.to_s
+          if Proc === on
+            return new(on, options)
+          else
+            on_string = on.to_s
+          end
 
         # `:on_all` is a shortcut `and`ing all supplied predicates
         elsif on_all = options[:on_all]
@@ -51,7 +55,13 @@ class AngryMob
       def initialize(on,options,&blk)
         @on = on
         @options = AngryHash[ options ]
-        parse!
+
+        if Proc === @on
+          @predicate     = @on
+          @instance_exec = true
+        else
+          parse!
+        end
       end
 
       def reset!
@@ -72,7 +82,12 @@ class AngryMob
       def match?(event)
         event = event.to_s
         seen!(event)
-        @predicate[event]
+
+        if @instance_exec
+          instance_exec(event,&@predicate)
+        else
+          @predicate[event]
+        end
       end
 
       def match_event?(new_event,event)
@@ -89,6 +104,10 @@ class AngryMob
 
       def seen?(event)
         seen[event.to_s]
+      end
+
+      def events
+        seen.keys
       end
     end
   end
