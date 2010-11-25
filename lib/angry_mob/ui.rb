@@ -150,6 +150,11 @@ class AngryMob
     end
     alias_method :bad, :error
 
+    def ex(message,ex)
+      error "#{message} [#{$!.class}] #{$!}"
+      ex.backtrace.each {|line| error line}
+    end
+
     def debug?
       @debug ||= !(FalseClass === @options[:debug])
     end
