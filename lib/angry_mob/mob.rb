@@ -13,9 +13,9 @@ class AngryMob
 
     attr_reader :path, :name, :loader
 
-    def initialize(path,name)
-      @path   = Pathname(path).expand_path
-      @name ||= @path.basename.to_s
+    def initialize(path,name=nil)
+      @path = Pathname(path).expand_path
+      @name = name || @path.basename.to_s
 
       ui.log "added mob #{@name} from #{@path}"
     end
