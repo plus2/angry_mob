@@ -28,11 +28,15 @@ class AngryMob
 
     # read and evaluate a file in builder context
     def from_file(mob,path)
+      with_mob(mob,path) do
+        instance_eval path.read, path.to_s
+      end
+    end
+
+    def with_mob(mob,path)
       @mob  = mob
       @file = path
-
-      instance_eval path.read, path.to_s
-
+      yield
       self
     ensure
       @mob  = nil
