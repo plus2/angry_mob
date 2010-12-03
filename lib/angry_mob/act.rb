@@ -99,7 +99,7 @@ class AngryMob
 
       file,line,method = *bt[act_index-1].split(':')
 
-      file = Pathname(file)
+      file = Pathname(file).expand_path
       line = line.to_i
 
       relative_file = file.relative_path_from(mob.path)
