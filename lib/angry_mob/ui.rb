@@ -146,7 +146,7 @@ class AngryMob
     end
 
     def error(message)
-      say spaces+message, :red
+      say spaces+indent_string(message, @level+1), :red
     end
     alias_method :bad, :error
 
