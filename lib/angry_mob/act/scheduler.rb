@@ -48,6 +48,7 @@ class AngryMob
         acted!(act_name)
 
         act.run!(*arguments)
+        fire( "finished/#{act.name}" )
       end
 
       def fire(event)
@@ -71,7 +72,6 @@ class AngryMob
             acted!(act)
 
             act.run!
-            fire( "finished/#{act.name}" )
           end
         end
 
