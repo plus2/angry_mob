@@ -6,6 +6,8 @@ class AngryHash < Hash
   require 'angry_hash/merging'
   require 'angry_hash/initialiser'
 
+  require 'angry_hash/parsing'
+
   # config
   require 'angry_hash/dsl'
   include AngryHash::DSL
@@ -141,4 +143,5 @@ class AngryHash < Hash
   include Conversion::Duplicating
   include Conversion::ByReference
   include ExtensionAware
+  include Parsing
 end
