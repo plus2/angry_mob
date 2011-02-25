@@ -86,35 +86,47 @@ class AngryMob
       call.target
     end
 
+
     def in_sub_act(*args,&blk)
       sub_act = self.class.new(NullMobInstance, "#{name}-sub-#{generate_random_name}", {:multi => true}, &blk)
       sub_act.bind(rioter,@definition_file)
       sub_act.run!(*args)
     end
 
+
     def raise_runtime_error(exception)
       bt = $!.backtrace
       act_line = bt.find {|line| line[/^#{this_file}:\d+:in `instance_exec'$/]}
-      act_index = bt.rindex(act_line)
 
-      file,line,method = *bt[act_index-1].split(':')
+      ui.bad "Problem running #{mob.name}:#{name}"
+      ui.bad "[#{$!.class}] #{$!}"
+
+      bt.each_with_index do |line,index|
+        report_bt_line( bt[index-1] ) if line == act_line
+      end
+
+      raise $!
+    end
+
+
+    def report_bt_line(line)
+      file,line,method = *line.split(':')
 
       file = Pathname(file).expand_path
       line = line.to_i
 
       relative_file = file.relative_path_from(mob.path)
 
-      ui.bad "Problem running #{mob.name}:#{name} #{relative_file} at line #{line+1}"
+      ui.bad "in #{relative_file} at line #{line+1}"
 
       begin
         extract_code(file,line).each {|line| ui.bad line.rstrip.chomp}
       rescue
-        puts "unable to extract code"
+        puts "unable to extract code for #{line}"
         ui.exception!($!)
       end
-
-      raise $!
     end
+
 
     def extract_code(file,line,context=3)
       lines = file.open.readlines
