@@ -230,14 +230,22 @@ class AngryMob
       end
     end
 
+
+    def action?(*actions)
+      !( actions.norm.map {|a| a.to_s} & args.actions ).empty?
+    end
+
+
     # delegates to the node's resource locator
     def resource(name)
       node.resource_locator[self,name]
     end
 
+
     def log(message="")
       ui.log(message)
     end
+
 
     # delegate to the default object
     def method_missing(method,*args,&blk)
