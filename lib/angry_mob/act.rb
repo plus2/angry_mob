@@ -10,6 +10,7 @@ class AngryMob
     NullMobInstance = NullMob.new
     BlankAct = lambda {|*|}
 
+
     def initialize(mob,*args,&blk)
       @mob     = mob
       @options = args.extract_options!
@@ -21,6 +22,7 @@ class AngryMob
       parse_predicate!
     end
 
+
     def parse_predicate!
       begin
         @predicate = Predicate.build( options.slice(:on,:on_all,:on_any) )
@@ -30,14 +32,18 @@ class AngryMob
       end
     end
 
+
     def ui; mob.ui end
     def log(message); mob.ui.log message end
 
+
     def multi?; !!@multi end
+
 
     def match?(event)
       @predicate.match?(event)
     end
+
 
     # Binds the act to the rioter and the file from which it came.
     def bind(rioter,file)
@@ -46,6 +52,7 @@ class AngryMob
 
       rioter.act_scheduler.add_act @name, self
     end
+
 
     #### Compilation
 
@@ -64,16 +71,19 @@ class AngryMob
       end
     end
 
+
     # bundler + rubygems clusterfuck
     def gem(*args,&blk)
       __run_target(:gem,*args,&blk)
     end
+
 
     # TODO - de-mm
     def method_missing(nickname,*args,&blk)
       return super unless @running
       __run_target(nickname,*args,&blk)
     end
+
 
     # Locates and calls a `Target::Call` (which wraps a `Target`).
     # The wrapped `Target` is returned.
@@ -138,9 +148,12 @@ class AngryMob
       end
     end
 
+
     def this_file
       File.expand_path(__FILE__)
     end
+
+
 
     #### Definition helpers
 
@@ -148,21 +161,26 @@ class AngryMob
       @defaults ||= Target::Defaults.new
     end
 
+
     def node
       rioter.node
     end
+
 
     def act_now act_name, *args
       rioter.act_scheduler.act_now act_name, *args
     end
 
+
     def fire event_name
       rioter.act_scheduler.fire event_name
     end
 
+
     def schedule_act act_name
       raise "to remove"
     end
+
 
     protected
     def generate_random_name
