@@ -161,6 +161,7 @@ class AngryMob
     def do_validation!
       validate!
       unless @problems.blank?
+        ui.error "There were problems validating #{self}:"
         @problems.each {|p| ui.error "problem: #{p}"}
         raise "target[#{nickname}] wasn't valid"
       end
