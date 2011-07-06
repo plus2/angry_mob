@@ -168,7 +168,12 @@ class AngryMob
 
 
     def act_now act_name, *args
-      rioter.act_scheduler.act_now act_name, *args
+      rioter.act_scheduler.act_now act_name, {}, *args
+    end
+
+
+    def try_to_act_now act_name, *args
+      rioter.act_scheduler.act_now act_name, {:try => true}, *args
     end
 
 
