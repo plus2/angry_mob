@@ -12,14 +12,17 @@ class AngryMob
         validate_actions!
       end
 
+
       # Delegate to the Target subclass to create a unique `instance_key`
       def self.instance_key(klass,args)
         klass.instance_key(Arguments.parse(args))
       end
 
+
       def instance_key
         self.class.instance_key(klass,args)
       end
+
 
       # Replace arguments, but preserve the original actions.
       def add_args(new_args)
@@ -27,10 +30,12 @@ class AngryMob
         validate_actions!
       end
 
+
       # Merge current defaults into the arguments
       def merge_defaults(defaults)
         args.reverse_deep_merge!(defaults)
       end
+
 
       # Actually call the target
       def call(act, hints={})
@@ -42,10 +47,12 @@ class AngryMob
         }
       end
 
+
       # The `Target`'s nickname
       def nickname
         klass.nickname
       end
+
 
       # Ensure that we have a known action.
       def validate_actions!

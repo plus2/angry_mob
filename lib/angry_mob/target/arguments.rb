@@ -10,6 +10,7 @@ class AngryMob
         extract_actions!
       end
 
+
       # Take 'any' input and return an `Arguments` instance.
       def self.parse(input,&blk)
         case input
@@ -26,6 +27,7 @@ class AngryMob
         end
       end
 
+
       # Update arguments without updating actions too.
       def update_preserving_actions(other_args)
         other_args = self.class.parse(other_args)
@@ -33,18 +35,22 @@ class AngryMob
         self
       end
       
+
       # Delegate unknown access to the underlying AngryHash.
       def method_missing(meth,*args,&block)
         @args.send(meth,*args,&block)
       end
 
+
       def extract_actions!
         @actions = [ @args.delete('actions'), @args.delete('action') ].norm.map {|s| s.to_s}
       end
 
+
       def actions=(array)
         @actions = array.norm.map{|s| s.to_s}
       end
+
 
       def extract_args(args,&blk)
         args.flatten!

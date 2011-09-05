@@ -25,6 +25,7 @@ class AngryMob
       self.class.ui
     end
 
+
     # main entry point the the whole system
     def riot!(nodename, attributes)
       start = Time.now
@@ -43,6 +44,7 @@ class AngryMob
       @act_scheduler.reset!
     end
 
+
     # bind selected targets to the node
     def setup!
       ui.task "setting up node"
@@ -59,10 +61,12 @@ class AngryMob
       self
     end
 
+
     # runs acts and then delayed targets
     def run!
       act_scheduler.run!
     end
+
 
     # building
     # builder populates the following with definition blocks

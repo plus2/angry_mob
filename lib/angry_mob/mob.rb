@@ -4,6 +4,7 @@ class AngryMob
     def path; '' end
   end
 
+
   ## Mob
   # A collection of acts, targets and supporting libraries.
   #
@@ -13,12 +14,14 @@ class AngryMob
 
     attr_reader :path, :name, :loader
 
+
     def initialize(path,name=nil)
       @path = Pathname(path).expand_path
       @name = name || @path.basename.to_s
 
       ui.log "added mob #{@name} from #{@path}"
     end
+
 
     def load!(loader)
       @loader = loader
@@ -44,16 +47,22 @@ class AngryMob
       self
     end
 
+
     def loaded?
       !! @loaded
     end
 
-    # API
+
+    #########
+    #  API  #
+    #########
+
 
     # Ensure the mob `name` is loaded before this one.
     def depends_on_mob(name)
       loader.load_mob_named(name)
     end
+
 
     # Load all targets under `path`
     def load_targets(path=nil)
@@ -68,6 +77,7 @@ class AngryMob
       end
     end
 
+
     # Add `path` to the load path
     def load_lib(path=nil)
       path ||= self.path + 'lib'
@@ -77,6 +87,7 @@ class AngryMob
       ui.log "adding load path #{path}"
       $LOAD_PATH << path
     end
+
 
     # Load all acts under `path`
     def load_acts(path=nil)
@@ -89,6 +100,7 @@ class AngryMob
         loader.builder.from_file(self,file)
       end
     end
+
 
     # Load acts from the file at `path`.
     def load_act_file(path)

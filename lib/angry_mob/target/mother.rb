@@ -7,13 +7,16 @@ class AngryMob
     class Mother
       attr_reader :rioter
 
+
       def initialize(rioter)
         @rioter = rioter
       end
 
+
       def target_classes
         Target::Tracking.subclasses
       end
+
 
       # Allow one class to pose under another's nickname
       def pose_as(nickname,nickname_to_pose_as)
@@ -30,6 +33,7 @@ class AngryMob
         end
       end
 
+
       # Given a nickname, look up the `Target` subclass and create a memoised `Target::Call`.
       def target_call(nickname, *args, &blk)
         raise(MobError, "no target nicknamed '#{nickname}'\navailable targets:\n#{target_classes.keys.inspect}") unless target_classes.key?(nickname.to_s)
@@ -39,7 +43,7 @@ class AngryMob
 
         args = Arguments.parse(args,&blk)
 
-        if key = Target::Call.instance_key(klass,args)
+        if key = Target::Call.instance_key(klass, args)
 
           # Use the memoised call if we can.
           if call = target_instances[key]
@@ -66,17 +70,21 @@ class AngryMob
         call
       end
 
+
       def clear_instances!
         @target_instances = nil
       end
+
 
       def target_instances
         @target_instances ||= {}
       end
 
+
       def unkeyed_instances
         @unkeyed_instances ||= []
       end
+
 
       def key_classes 
         @key_classes ||= Hash.new {|h,k| h[k] = []}

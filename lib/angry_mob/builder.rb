@@ -7,16 +7,20 @@ class AngryMob
 
     attr_reader :attributes, :mob
 
+
     def initialize(attributes)
       @attributes = attributes
     end
+
 
     def self.from_file(path)
       path = Pathname(path)
       new.from_file(path)
     end
 
+
     attr_reader :node_consolidation_block
+
 
     def file
       if @file
@@ -43,6 +47,8 @@ class AngryMob
       @file = nil
     end
 
+
+    # Assembles the rioter from Act definitions
     def to_rioter
       rioter = Rioter.new
 
@@ -73,13 +79,17 @@ class AngryMob
       rioter
     end
 
-    #### DSL API
+    ###################
+    #  DSL-esque API  #
+    ###################
+
 
     # Defines an `act` block
     def act(*args, &blk)
       act = Act.new(mob,*args,&blk)
       acts << [act,file.dup]
     end
+
 
     def multi_act(name, options={}, &blk)
       options[:multi] = true
@@ -88,22 +98,27 @@ class AngryMob
       acts << [act,file.dup]
     end
 
+
     def event(*args,&blk)
       event_processors << AngryMob::Act::EventProcessor.new(*args,&blk)
     end
 
+
     def act_helper(&blk)
       helper_mod.module_eval(&blk)
     end
+
 
     # A `setup_node` block allows the rioter to set defaults, load resource locators and anything else you like.
     def setup_node(&blk)
       node_setup_blocks << blk
     end
 
+
     def consolidate_node(&blk)
       @node_consolidation_block = blk
     end
+
 
     # Defaults
     def node_defaults(&blk)

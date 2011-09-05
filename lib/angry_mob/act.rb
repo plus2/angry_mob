@@ -155,7 +155,9 @@ class AngryMob
 
 
 
-    #### Definition helpers
+    ########################
+    #  Definition helpers  #
+    ########################
 
     def defaults
       @defaults ||= Target::Defaults.new

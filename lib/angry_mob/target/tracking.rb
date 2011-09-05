@@ -8,15 +8,18 @@ class AngryMob
           base.send :extend,  ClassMethods
         end
 
+
         # Returns the classes that inherit from AngryMob::Target
         def subclasses
           @subclasses ||= {}
         end
 
+
         # Returns the files where the subclasses are kept.
         def subclass_files
           @subclass_files ||= Hash.new{ |h,k| h[k] = [] }
         end
+
 
         # Whenever a class inherits from AngryMob::Target, we should track the
         # class and the file on AngryMob::Target::Tracking. This is the method responsible for it.
@@ -32,12 +35,14 @@ class AngryMob
         end
       end
 
+
       module ClassMethods
         # Everytime someone inherits from a AngryMob::Target class, register the klass
         # and file into baseclass.
         def inherited(klass)
           AngryMob::Target::Tracking.register_klass_file(klass)
         end
+
 
         # Fire this callback whenever a method is added. Added methods are
         # tracked as actions by invoking the create_action method.
@@ -58,6 +63,7 @@ class AngryMob
           #is_thor_reserved_word?(meth, :task)
           AngryMob::Target::Tracking.register_klass_file(self)
         end
+
 
         def nickname(name=nil)
           if name
