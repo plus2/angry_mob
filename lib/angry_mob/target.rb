@@ -18,13 +18,17 @@ class AngryMob
         @set_default_action = true
       end
 
+
       def actions
         @actions ||= ['nothing']
       end
+
+
       def all_actions
         @all_actions ||= from_superclass(:all_actions, ['nothing'])
         @all_actions |= actions
       end
+
 
       def default_action_name
         @default_action
@@ -36,6 +40,7 @@ class AngryMob
       def instance_key(args)
         args.key
       end
+
 
       protected
       def create_action(method)
@@ -51,17 +56,21 @@ class AngryMob
         @set_default_action = nil
       end
 
+
       def baseclass #:nodoc:
         AngryMob::Target
       end
 
     end # class << self
 
+
     def nickname
       self.class.nickname
     end
 
+
     attr_reader :args, :current_action
+
 
     # convenience accessors
     attr_accessor :act

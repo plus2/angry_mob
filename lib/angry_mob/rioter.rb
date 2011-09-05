@@ -8,6 +8,7 @@ class AngryMob
       @act_scheduler = Act::Scheduler.new(self)
     end
 
+
     class << self
       # delegate to the current ui
       def ui

@@ -54,8 +54,6 @@ class AngryMob
     end
 
 
-    #### Compilation
-
     # Executes the block via `instance_exec`
     def run!(*arguments)
       ui.push("act '#{name}'", :bubble => true) do
@@ -72,11 +70,10 @@ class AngryMob
     end
 
 
-    # bundler + rubygems clusterfuck
-    def gem(*args,&blk)
-      __run_target(:gem,*args,&blk)
-    end
 
+    ##############
+    #  Dispatch  #
+    ##############
 
     # TODO - de-mm
     def method_missing(nickname,*args,&blk)
@@ -85,10 +82,16 @@ class AngryMob
     end
 
 
+    # bundler + rubygems clusterfuck
+    def gem(*args,&blk)
+      __run_target(:gem,*args,&blk)
+    end
+
+
     # Locates and calls a `Target::Call` (which wraps a `Target`).
     # The wrapped `Target` is returned.
     def __run_target(nickname,*args,&blk)
-      call = rioter.target_mother.target_call(nickname,*args,&blk)
+      call = rioter.target_mother.target_call(nickname, *args, &blk)
 
       call.merge_defaults(defaults.defaults_for(nickname))
       call.call(self)
@@ -102,6 +105,11 @@ class AngryMob
       sub_act.bind(rioter,@definition_file)
       sub_act.run!(*args)
     end
+
+
+    ##################################
+    #  Error handling and reporting  #
+    ##################################
 
 
     def raise_runtime_error(exception)
