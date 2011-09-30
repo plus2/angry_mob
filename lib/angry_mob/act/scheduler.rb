@@ -1,5 +1,11 @@
 class AngryMob
   class Act
+
+    # The `AngryMob::Act::Scheduler` is responsible for executing acts.
+    #
+    # The order of act execution is based on
+    # - matching acts against events
+    # - direct execution of acts using `act_now`
     class Scheduler
       attr_writer :node
       attr_reader :acted, :rioter, :event_processors
@@ -32,24 +38,23 @@ class AngryMob
 
       # API
       def act_now(act_name, options, *arguments)
-        if AngryMob::Act === act_name
-          act = act_name
-          act_name = act.name
-        else
-          act = acts[act_name]
-        end
+        act, act_name = *resolve_act( act_name, options, *arguments )
+
 
         unless act
           act_missing!(act_name, options)
           return
         end
 
+
         if !act.multi? && acted.include?(act_name)
           ui.skipped! "(not re-running act #{act_name} - already run)"
           return
         end
 
+
         acted!(act_name)
+
 
         act.run!(*arguments)
         fire( "finished/#{act.name}" )
@@ -101,6 +106,26 @@ class AngryMob
 
 
       ## Utilities
+
+
+      # based on available info, resolve the act and its name
+      def resolve_act( act_or_name, options, *arguments )
+        if AngryMob::Act === act_or_name
+          act      = act_or_name
+          act_name = act.name
+
+        elsif act_or_name < AngryMob::Actor
+          act      = act_or_name.build_instance( options, *arguments )
+          act_name = act.name
+
+        else
+          act_name = act_or_name
+          act      = acts[act_name]
+        end
+
+        [ act, act_name ].tapp
+      end
+
 
       def add_act(name,act)
         acts[name.to_s]           = act

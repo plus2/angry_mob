@@ -8,10 +8,9 @@ mob = AngryMob::Rioter.new
 class DirectoryTarget < AngryMob::Target
   nickname :dir
 
-
   default_action
 	def create
-    puts "create #{default_object} #{exist?}"
+    puts "create #{dir} #{dir.exist?}"
   end
 
 
@@ -19,11 +18,12 @@ class DirectoryTarget < AngryMob::Target
 	def default_object
 		@default_object ||= Pathname( args.default_object )
 	end
+  alias_method :dir, :default_object
 
 
   def state
     {
-      :exists => exist?
+      :exists => dir.exist?
     }
   end
 end
@@ -31,6 +31,17 @@ end
 
 class Database
 	include AngryMob::Actor
+
+  build do |info|
+    case info.tapp(:info)[:kind]
+    when 'pg'
+      PgDatabase
+    end
+  end
+end
+
+
+class PgDatabase < Database
 end
 
 
@@ -43,6 +54,10 @@ eg 'attrs' do
 	builder.from_block(mob) do 
 		act 'thing/thing', :on => 'thing' do
 			dir "/tmp/foo.txt"
+			dir "/tmp/foo.txt"
+			dir "/tmp/foo.txt"
+
+      act_now Database, {:kind => 'pg'}
 		end
 	end
 
