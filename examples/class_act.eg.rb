@@ -10,6 +10,7 @@ class DirectoryTarget < AngryMob::Target
 
   default_action
 	def create
+    definition_file.tapp(:c)
     puts "create #{dir} #{dir.exist?}"
   end
 
@@ -42,6 +43,12 @@ end
 
 
 class PgDatabase < Database
+
+  def run!(*args)
+    args.tapp "pg_database"
+
+    dir "/tmp/pg"
+  end
 end
 
 
