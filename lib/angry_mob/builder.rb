@@ -33,14 +33,14 @@ class AngryMob
 
     # read and evaluate a file in builder context
     def from_file(mob,path)
-      with_mob(mob,path) do
+      with_mob(mob, path) do
         instance_eval path.read, path.to_s
       end
     end
 
 
 		def from_block(mob, &blk)
-			with_mob(mob, '') do
+			with_mob(mob, '<block>') do
 				instance_eval(&blk)
 			end
 		end
