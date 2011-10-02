@@ -125,7 +125,7 @@ class AngryMob
           act      = acts[act_name]
         end
 
-        [ act, act_name ].tapp
+        [ act, act_name ]
       end
 
 
@@ -139,7 +139,12 @@ class AngryMob
 
 
       def reset!
-        %w{ seed_events available_acts acted_acts }.each {|ivar| instance_variable_set("@#{ivar}", nil)}
+        %w{ 
+          seed_events
+          available_acts
+          acted_acts
+        }.each {|ivar| instance_variable_set("@#{ivar}", nil)}
+
         @acted = []
       end
 
