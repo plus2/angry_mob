@@ -20,17 +20,19 @@ class AngryMob
 
 
       def run!
-        # fire initial events
-        seed_events.each do |event|
-          fire event
+        AngryMob::Act::Api.running do
+          # fire initial events
+          seed_events.each do |event|
+            fire event
+          end
+
+          # schedule events until the event queue is empty
+          exhaust_queue
+
+          # finalisation phase: fire the finalise event and exhaust the queue again
+          fire 'finalise'
+          exhaust_queue
         end
-
-        # schedule events until the event queue is empty
-        exhaust_queue
-
-        # finalisation phase: fire the finalise event and exhaust the queue again
-        fire 'finalise'
-        exhaust_queue
 
         ui.good "finished running acts"
       end
