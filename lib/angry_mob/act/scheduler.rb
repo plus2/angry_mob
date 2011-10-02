@@ -117,7 +117,7 @@ class AngryMob
           act_name = act.name
 
         elsif act_or_name < AngryMob::Actor
-          act      = act_or_name.build_instance( options, *arguments )
+          act      = act_or_name.build_instance( rioter, options, *arguments )
           act_name = act.name
 
         else

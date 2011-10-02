@@ -13,6 +13,7 @@ class AngryMob
     require "angry_mob/target/internal_api"
     require "angry_mob/target/calling"
 
+
     include Tracking
     include ClassApi
     include InternalApi
@@ -24,23 +25,21 @@ class AngryMob
     end
 
 
-    attr_reader :args, :current_action
+    attr_reader :rioter, :definition_file, :args, :current_action
 
 
     # convenience accessors
     attr_accessor :act
 
 
-    def mob   ; act.mob     end
-    def rioter; act.rioter  end
-    def ui    ; mob.ui      end
+    def ui    ; rioter.ui   end
     def node  ; rioter.node end
 
 
-    def log(message); mob.ui.log message end
+    def initialize(rioter, definition_file, args, &blk)
+      @rioter = rioter
+      @definition_file = definition_file.tapp(:def_file)
 
-
-    def initialize(args, &blk)
       @args = Arguments.parse(args, &blk)
       validate_actions!
     end
