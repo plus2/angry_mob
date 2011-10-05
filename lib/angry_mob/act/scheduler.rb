@@ -114,7 +114,7 @@ class AngryMob
           act      = act_or_name
           act_name = act.name
 
-        elsif act_or_name < AngryMob::Actor
+        elsif act_or_name.is_a?(Module) && act_or_name < AngryMob::Actor
           act      = act_or_name.build_instance( options, *arguments )
           act_name = act.name
 
@@ -123,7 +123,7 @@ class AngryMob
           act      = acts[act_name]
         end
 
-        [ act, act_name ].tapp
+        [ act, act_name ]
       end
 
 
