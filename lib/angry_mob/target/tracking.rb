@@ -95,12 +95,19 @@ class AngryMob
         def create_action(method)
           return if self == AngryMob::Target # XXX protect methods properly and remove this
 
+          # don't create the action twice
+          method_s = method.to_s
+          return if actions.include? method_s
+
+
           if @set_default_action && @default_action
             raise ArgumentError, "#{nickname}() can only have one default_action"
           end
 
-          @default_action = method.to_s if @set_default_action
-          actions << method.to_s
+
+          @default_action = method_s if @set_default_action
+          actions << method_s
+
 
           @set_default_action = nil
         end
