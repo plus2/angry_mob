@@ -37,9 +37,9 @@ class AngryMob
           instance_eval(loader_file.read,loader_file.to_s)
         else
           # Otherwise, assume a default layout.
-          load_lib(path    +'lib')
-          load_targets(path+'targets')
-          load_acts(path   +'acts')
+          load_lib(path     + 'lib')
+          load_targets(path + 'targets')
+          load_acts(path    + 'acts')
         end
       end
 
