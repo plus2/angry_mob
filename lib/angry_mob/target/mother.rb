@@ -32,7 +32,7 @@ class AngryMob
 
 
       def target(nickname, *args, &blk)
-        target_class( nickname ).new( *args, &blk )
+        target_class( nickname ).new( args, &blk )
       end
 
 
