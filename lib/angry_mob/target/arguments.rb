@@ -12,7 +12,7 @@ class AngryMob
 
 
       # Take 'any' input and return an `Arguments` instance.
-      def self.parse(input,&blk)
+      def self.parse(input, &blk)
         case input
         when Arguments
           input

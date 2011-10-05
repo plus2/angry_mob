@@ -1,77 +1,50 @@
-require "angry_mob/target/tracking"
-
 class AngryMob
   class TargetError < StandardError; end
   class Target
     autoload :Mother   , 'angry_mob/target/mother'
-    autoload :Call     , 'angry_mob/target/call'
     autoload :Defaults , "angry_mob/target/defaults"
     autoload :Arguments, "angry_mob/target/arguments"
 
     autoload :DefaultResourceLocator, "angry_mob/target/default_resource_locator"
 
+
+    require "angry_mob/target/tracking"
+    require "angry_mob/target/class_api"
+    require "angry_mob/target/internal_api"
+    require "angry_mob/target/calling"
+
     include Tracking
+    include ClassApi
+    include InternalApi
+    include Calling
 
-    # Ok lets define some class level helpings.
-    class << self
-      def default_action
-        @set_default_action = true
-      end
-
-      def actions
-        @actions ||= ['nothing']
-      end
-      def all_actions
-        @all_actions ||= from_superclass(:all_actions, ['nothing'])
-        @all_actions |= actions
-      end
-
-      def default_action_name
-        @default_action
-      end
-
-
-      # Based on the args, makes a unique key for a target instance.
-      # This could be overridden by subclasses.
-      def instance_key(args)
-        args.key
-      end
-
-      protected
-      def create_action(method)
-        return if self == AngryMob::Target # XXX protect methods properly and remove this
-
-        if @set_default_action && @default_action
-          raise ArgumentError, "#{nickname}() can only have one default_action"
-        end
-
-        @default_action = method.to_s if @set_default_action
-        actions << method.to_s
-
-        @set_default_action = nil
-      end
-
-      def baseclass #:nodoc:
-        AngryMob::Target
-      end
-
-    end # class << self
 
     def nickname
       self.class.nickname
     end
 
+
     attr_reader :args, :current_action
+
 
     # convenience accessors
     attr_accessor :act
+
 
     def mob   ; act.mob     end
     def rioter; act.rioter  end
     def ui    ; mob.ui      end
     def node  ; rioter.node end
 
+
     def log(message); mob.ui.log message end
+
+
+    def initialize(args, &blk)
+      @args = Arguments.parse(args, &blk)
+      validate_actions!
+    end
+
 
     #### Call generation
 
@@ -92,9 +65,8 @@ class AngryMob
 
 
     # Executes actions with full context and all the trimmings.
-    def noticing_changes(args,&blk)
+    def noticing_changes(&blk)
       reset!
-      @args = args
 
       ui.push(to_s) do
         do_validation!
@@ -133,6 +105,7 @@ class AngryMob
       self
     end
 
+
     # Has the state changed?
     #   dir("/tmp/config").changed? && sh("echo it changed")
     def changed?
@@ -142,18 +115,27 @@ class AngryMob
 
     protected
 
+    # Called when the state has changed.
+    # Very simply delegates event to the act scheduler
+    def fire!
+      rioter.act_scheduler.fire(args.fire) if args.fire.present?
+    end
+    
+
     def reset!
       @skip = nil
-      @args = nil
     end
+
 
     def skip!
       @skip = true
     end
 
+
     def skip?
       !! @skip
     end
+
 
     #### Runtime
 
@@ -167,57 +149,12 @@ class AngryMob
       end
     end
 
-    # Targets should override this (possibly calling super) to do their own validation.
-    def validate!
-      problem!("The default object wasn't set") if default_object.blank?
-    end
-
-    # Flag a validation problem.
-    def problem!(problem)
-      @problems ||= []
-      @problems << problem
-    end
-
-    # Calculate and cache the state before any actions have been performed.
-    def before_state
-      @before_state ||= state
-    end
-
-
-    # Called when the state has changed.
-    # Very simply delegates event to the act scheduler
-    def fire!
-      rioter.act_scheduler.fire(args.fire) if args.fire.present?
-    end
-
-    # Give the target itself a neat place to react to changes.
-    # Default implementation is a no-op.
-    def changed
-      ui.log "target changed"
-      # no-op
-    end
 
     # has the state changed?
     def state_changed?
       before_state != state
     end
 
-    # Returns the state of the target.
-    # Default implementation is a random number (i.e. it always changes)
-    def state
-      {
-        :rand => rand
-      }
-    end
-
-    # returns the default object
-    # targets can customise this
-    # the default is the default_object argument. 
-    # See #initialize for how the default_option argument is set.
-    def default_object(clear=false)
-      @default_object = nil if clear
-      @default_object ||= default_object!
-    end
 
     def default_object!
       return unless args
@@ -233,27 +170,6 @@ class AngryMob
 
     def action?(*actions)
       !( actions.norm.map {|a| a.to_s} & args.actions ).empty?
-    end
-
-
-    # delegates to the node's resource locator
-    def resource(name)
-      node.resource_locator[self,name]
-    end
-
-
-    def log(message="")
-      ui.log(message)
-    end
-
-
-    # delegate to the default object
-    def method_missing(method,*args,&blk)
-      if (dobj = default_object) && dobj.respond_to?(method)
-        dobj.send(method,*args,&blk)
-      else
-        super
-      end
     end
   end
 end

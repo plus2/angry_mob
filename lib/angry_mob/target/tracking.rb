@@ -91,9 +91,25 @@ class AngryMob
           end
         end
 
+        protected
+        def create_action(method)
+          return if self == AngryMob::Target # XXX protect methods properly and remove this
 
-        def create_action(meth)
+          if @set_default_action && @default_action
+            raise ArgumentError, "#{nickname}() can only have one default_action"
+          end
+
+          @default_action = method.to_s if @set_default_action
+          actions << method.to_s
+
+          @set_default_action = nil
         end
+
+
+        def baseclass #:nodoc:
+          AngryMob::Target
+        end
+        
 
         def initialize_added
         end

@@ -18,6 +18,7 @@ class AngryMob
   autoload :Action         , 'angry_mob/action'
 
   autoload :Act            , 'angry_mob/act'
+  autoload :Actor          , 'angry_mob/actor'
 
   autoload :Log            , 'angry_mob/log'
   autoload :UI             , 'angry_mob/ui'

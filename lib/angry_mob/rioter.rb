@@ -4,22 +4,28 @@ class AngryMob
     attr_reader :node, :act_scheduler, :target_mother
 
     def initialize
-      @target_mother = Target::Mother.new(self)
+      @target_mother = Target::Mother.new
       @act_scheduler = Act::Scheduler.new(self)
     end
+
 
     class << self
       # delegate to the current ui
       def ui
         (@ui ||= ui!).current
       end
+
+
       def ui!
         @ui = UI.new
       end
+
+
       def ui=(ui)
         @ui = ui
       end
     end
+
 
     def ui
       self.class.ui
@@ -40,7 +46,6 @@ class AngryMob
       ui.info "beaten in #{Time.now-start}s"
       ui.info "#{nodename} has been beaten by an AngryMob. Have a nice day!"
 
-      @target_mother.clear_instances!
       @act_scheduler.reset!
     end
 

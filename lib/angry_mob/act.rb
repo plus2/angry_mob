@@ -11,7 +11,7 @@ class AngryMob
     BlankAct = lambda {|*|}
 
 
-    def initialize(mob,*args,&blk)
+    def initialize(mob, *args, &blk)
       @mob     = mob
       @options = args.extract_options!
       @name    = args.shift || generate_random_name
@@ -46,15 +46,13 @@ class AngryMob
 
 
     # Binds the act to the rioter and the file from which it came.
-    def bind(rioter,file)
+    def bind(rioter, file)
       @rioter          = rioter
       @definition_file = file
 
       rioter.act_scheduler.add_act @name, self
     end
 
-
-    #### Compilation
 
     # Executes the block via `instance_exec`
     def run!(*arguments)
@@ -72,36 +70,44 @@ class AngryMob
     end
 
 
-    # bundler + rubygems clusterfuck
-    def gem(*args,&blk)
-      __run_target(:gem,*args,&blk)
-    end
 
+    ##############
+    #  Dispatch  #
+    ##############
 
     # TODO - de-mm
-    def method_missing(nickname,*args,&blk)
+    def method_missing(nickname, *args, &blk)
       return super unless @running
       __run_target(nickname,*args,&blk)
     end
 
 
+    # bundler + rubygems clusterfuck
+    def gem(*args,&blk)
+      __run_target(:gem, *args, &blk)
+    end
+
+
     # Locates and calls a `Target::Call` (which wraps a `Target`).
     # The wrapped `Target` is returned.
-    def __run_target(nickname,*args,&blk)
-      call = rioter.target_mother.target_call(nickname,*args,&blk)
-
-      call.merge_defaults(defaults.defaults_for(nickname))
-      call.call(self)
-
-      call.target
+    def __run_target(nickname, *args, &blk)
+      rioter.target_mother.target(nickname, *args, &blk).tap do |target|
+        target.merge_defaults( defaults.defaults_for(nickname) )
+        target.call_with_act(self)
+      end
     end
 
 
-    def in_sub_act(*args,&blk)
+    def in_sub_act(*args, &blk)
       sub_act = self.class.new(NullMobInstance, "#{name}-sub-#{generate_random_name}", {:multi => true}, &blk)
-      sub_act.bind(rioter,@definition_file)
+      sub_act.bind(rioter, @definition_file)
       sub_act.run!(*args)
     end
+
+
+    ##################################
+    #  Error handling and reporting  #
+    ##################################
 
 
     def raise_runtime_error(exception)

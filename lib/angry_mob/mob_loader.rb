@@ -12,23 +12,27 @@ class AngryMob
       Rioter.ui
     end
 
+
     def initialize(attributes)
       @builder = Builder.new(attributes)
       @mobs    = Dictionary.new
       @loaded_mobs = {}
     end
 
+    
     def add_mob(path,name=nil)
       Mob.new(path,name).tap {|mob|
         mobs[mob.name] = mob
       }
     end
 
+
     def load_mobs
       mobs.each_key do |name|
         load_mob_named(name)
       end
     end
+
 
     def load_mob_named(name)
       name = name.to_s
@@ -40,6 +44,7 @@ class AngryMob
 
       mob.load!(self)
     end
+
 
     def to_rioter
       load_mobs

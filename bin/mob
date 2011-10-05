@@ -14,27 +14,35 @@ require 'thor'
 $:.unshift @root+'lib'
 require 'angry_mob'
 
+
+
 class MobCLI < Thor
 
   default_task 'riot'
+
+  attr_reader :config
+
+
+  # main entry point
   desc 'riot', 'riot the mob'
-  method_option :nodename , :type => :string, :required => true
-  method_option :json_file, :type => :string, :required => true
 
-  method_option :events   , :type => :array
-  method_option :act      , :type => :string
+  method_option :nodename         , :type => :string , :required => true
+  method_option :json_file        , :type => :string , :required => true
 
-  method_option :hooks      , :type => :string
+  method_option :events           , :type => :array
+  method_option :act              , :type => :string
+
+  method_option :hooks            , :type => :string
 
   method_option :debug            , :type => :boolean, :default => false
   method_option :dry_run          , :type => :boolean, :default => false
   method_option :allow_missing_act, :type => :boolean, :default => false
 
-  method_option :mobs, :type => :array, :default => []
+  method_option :mobs             , :type => :array  , :default => []
 
-  attr_reader :config
   def riot
     begin
+      # load config hooks
       load_hooks(config.hooks)
 
       @hooks.pre
@@ -47,10 +55,12 @@ class MobCLI < Thor
 
       AngryMob::Rioter.ui = ui   # XXX not threadsafe, but what is?
 
+      # create the mob loader
       mob_loader = AngryMob::MobLoader.new(attributes)
       
       config.mobs.each {|mob_path| mob_loader.add_mob(mob_path)}
 
+      # resolve mobs and create the rioter
       rioter = mob_loader.to_rioter
       rioter.riot!( config.nodename, attributes )
 
@@ -63,6 +73,7 @@ class MobCLI < Thor
       exit(1)
     end
   end
+
 
   desc 'match_events', 'match initial events against all predicates'
   method_option :json_file, :type => :string, :required => false
@@ -78,6 +89,8 @@ class MobCLI < Thor
     rioter = mob_loader.to_rioter
     rioter.act_scheduler.acts.values.select {|act| events.any? {|e| act.match?(e)}}.map {|act| act.name}.tapp
   end
+
+
 
   desc 'predicates', 'print all predicates'
   method_option :json_file, :type => :string, :required => false
@@ -103,6 +116,7 @@ class MobCLI < Thor
     cols.each {|parts| puts fmt % parts}
   end
 
+
   no_tasks do
     def config
       @config ||= AngryHash[ options ]
@@ -112,6 +126,7 @@ class MobCLI < Thor
       @attribute_load_options ||= {}
     end
   end
+
 
   protected
   def build_attributes
@@ -127,6 +142,7 @@ class MobCLI < Thor
 
     attributes
   end
+
 
   def load_attributes
     return AngryHash.new unless config.json_file?
@@ -153,11 +169,14 @@ class MobCLI < Thor
     AngryHash[attributes || {}]
   end
 
+
   def load_hooks(file)
     @hooks = MobHooks.new( self, file )
   end
 
 end
+
+
 
 
 class MobHooks
@@ -193,6 +212,8 @@ class MobHooks
   def pre_blocks ; @pre_blocks ||= [] end
   def attr_blocks; @attr_blocks ||= [] end
 end
+
+
 
 
 MobCLI.start
