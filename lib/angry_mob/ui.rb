@@ -54,11 +54,13 @@ class AngryMob
       @colour = CLEAR
     end
 
+
     #def self.stack; @stack ||= [] end
     #def stack; self.class.stack end
     def current
       stack.last || self
     end
+
 
     def colourise(string, colour, bold=false)
       color = self.class.const_get(colour.to_s.upcase) if colour.is_a?(Symbol)
@@ -66,9 +68,11 @@ class AngryMob
       "#{bold}#{color}#{string}#{CLEAR}"
     end
 
+
     def recolourize(colour)
       $stdout.print("\e[s\e[1G#{RED}\e[u")
     end
+
 
     def say(message="", colour=nil, force_new_line=(message.to_s !~ /( |\t)$/))
       return if self.class.silence?
@@ -84,26 +88,33 @@ class AngryMob
       end
     end
 
+
+    # indented say
     def isay(message, colour=nil, force_new_line=(message.to_s !~ /( |\t)$/))
       say spaces+message, colour, force_new_line
     end
+
 
     def newline
       $stdout.puts "\n" unless self.class.silence?
     end
 
+
     def spaces
       "  " * @level
     end
+
 
     def indent
       @level += 1
     end
 
+
     def outdent
       @level -= 1
       @level = @min_level if @level < @min_level
     end
+
 
     def self.silence(&block)
       old_silence,@silence = @silence,true
@@ -111,65 +122,87 @@ class AngryMob
     ensure
       @silence = old_silence
     end
+
+
     def self.silence?
       @silence
     end
+
+
     def silence(&block)
       self.class.silence(&block)
     end
+
+
     def silence(&block)
       self.class.silence(&block)
     end
+
+
+    # message convenience methods
 
     def info(message)
       say spaces+message, :bright_white
     end
 
+
     def good(message)
       say spaces+message, :green
     end
 
+
     def task(message)
       sigil('>>', message)
     end
+
 
     def sigil(sigil,message,colour=:blue)
       isay "#{sigil} ", colour
       say message
     end
 
+
     def log(message)
       say spaces+indent_string(message, @level+1), :white
     end
 
+
     def point(message)
       say spaces+"● #{message}", :blue
     end
+
+
+    def warn(message)
+      say spaces+message, :yellow
+    end
+
 
     def error(message)
       say spaces+indent_string(message, @level+1), :red
     end
     alias_method :bad, :error
 
+
     def ex(message,ex)
       error "#{message} [#{$!.class}] #{$!}"
       ex.backtrace.each {|line| error line}
     end
 
+
     def debug?
       @debug ||= !(FalseClass === @options[:debug])
     end
+
+
     def debug(message)
       say spaces+message, :gray if debug?
     end
+
 
     def benchmark?
       @benchmark ||= !(FalseClass === @options[:benchmark])
     end
 
-    def warn(message)
-      say spaces+message, :yellow
-    end
 
     def push(message,opts={},&block)
       start_time = Time.now
@@ -223,11 +256,13 @@ class AngryMob
       newline
     end
 
+
     def start!(banner)
       say spaces+">> ", :blue
       say banner, :white, false
       say " {", :yellow
     end
+
 
     def exception!(ex)
       msg = "[#{ex.class}] - #{ex.message}"
@@ -238,16 +273,19 @@ class AngryMob
       @message = msg
     end
 
+
     def ok!(message=nil)
       @result = :ok
       @message = message
     end
     alias_method :changed!, :ok!
 
+
     def skipped!(message)
       @result = :skip
       @message = message
     end
+
 
     protected
     def indent_string(string,level=@level)

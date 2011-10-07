@@ -99,7 +99,7 @@ class AngryMob
       # load each file... higher files first
       Pathname.glob(path+'**/*.rb').sort_by {|file|
         file.to_s.split('/').size
-      }.tapp.each do |file|
+      }.each do |file|
         loader.builder.from_file(self,file)
       end
     end
