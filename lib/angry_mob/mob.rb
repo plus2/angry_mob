@@ -96,7 +96,10 @@ class AngryMob
       raise "acts path #{path} didn't exist" unless path.exist?
       ui.log "loading acts from #{path}"
 
-      Pathname.glob(path+'**/*.rb').each do |file|
+      # load each file... higher files first
+      Pathname.glob(path+'**/*.rb').sort_by {|file|
+        file.to_s.split('/').size
+      }.tapp.each do |file|
         loader.builder.from_file(self,file)
       end
     end
