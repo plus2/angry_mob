@@ -95,10 +95,14 @@ class AngryHash < Hash
           hash
         end
       end
+
+      new_hash
     when Array
       new_array = cycle_guard[value.hash] = []
 
       value.each {|v| new_array << __to_hash(v,keys,cycle_guard)}
+
+      new_array
     else
       value
     end
