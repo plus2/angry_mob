@@ -106,9 +106,12 @@ class AngryMob
       file = Pathname(file).expand_path
       line = line.to_i
 
-      relative_file = file.relative_path_from(mob.path)
-
-      ui.bad "in #{relative_file} at line #{line+1}"
+      if mob.respond_to?(:path)
+        relative_file = file.relative_path_from(mob.path)
+        ui.bad "in #{relative_file} at line #{line+1}"
+      else
+        ui.bad "in anonymous mob"
+      end
 
       begin
         extract_code(file,line).each {|line| ui.bad line.rstrip.chomp}

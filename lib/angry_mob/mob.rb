@@ -1,7 +1,7 @@
 class AngryMob
   class NullMob
     def ui ; Rioter.ui end
-    def path; '' end
+    def name; 'nullmob' end
   end
 
 
@@ -37,9 +37,9 @@ class AngryMob
           instance_eval(loader_file.read,loader_file.to_s)
         else
           # Otherwise, assume a default layout.
-          load_lib(path    +'lib')
-          load_targets(path+'targets')
-          load_acts(path   +'acts')
+          load_lib(path     + 'lib')
+          load_targets(path + 'targets')
+          load_acts(path    + 'acts')
         end
       end
 
@@ -96,7 +96,10 @@ class AngryMob
       raise "acts path #{path} didn't exist" unless path.exist?
       ui.log "loading acts from #{path}"
 
-      Pathname.glob(path+'**/*.rb').each do |file|
+      # load each file... higher files first
+      Pathname.glob(path+'**/*.rb').sort_by {|file|
+        file.to_s.split('/').size
+      }.each do |file|
         loader.builder.from_file(self,file)
       end
     end

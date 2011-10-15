@@ -75,7 +75,15 @@ class MobCLI < Thor
   end
 
 
+  desc "riot_file", "riot the mob, using a directive file as input"
+  def riot_file(file)
+    load_config_from_file(file)
+    riot
+  end
+
+
   desc 'match_events', 'match initial events against all predicates'
+
   method_option :json_file, :type => :string, :required => false
   method_option :events, :type => :string, :required => true
   method_option :mobs  , :type => :array , :default => []
@@ -93,6 +101,7 @@ class MobCLI < Thor
 
 
   desc 'predicates', 'print all predicates'
+
   method_option :json_file, :type => :string, :required => false
   method_option :mobs     , :type => :array , :default => []
   def predicates
@@ -118,9 +127,27 @@ class MobCLI < Thor
 
 
   no_tasks do
+    def load_config_from_file( file )
+      require 'json/pure'
+      file = Pathname(file).expand_path
+      root = file.dirname
+
+      @config = AngryHash[ JSON.parse( file.read ) ]
+
+      @config.json_file =  File.expand_path @config.json_file, root
+      @config.mobs.map! {|mob| File.expand_path mob, root}
+    end
+
+
+    def expand_config_path( root, key )
+      @config[key] = File.expand_path( @config[key], root )
+    end
+
+
     def config
       @config ||= AngryHash[ options ]
     end
+
 
     def attribute_load_options
       @attribute_load_options ||= {}

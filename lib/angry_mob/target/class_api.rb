@@ -24,7 +24,7 @@ class AngryMob
 
 
         def default_action_name
-          @default_action
+          @default_action ||= from_superclass(:default_action_name, nil)
         end
       end
     end
