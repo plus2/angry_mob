@@ -28,21 +28,16 @@ class AngryMob
     end
 
 
-		attr_reader :target_mother, :act_scheduler, :node
-
-
     # Binds the act to the rioter.
     def bind_rioter(rioter)
 			puts "binding rioter"
-			@target_mother = rioter.target_mother
 			@act_scheduler = rioter.act_scheduler
 
-      rioter.act_scheduler.add_act @name, self
+      @act_scheduler.add_act @name, self
     end
 
 
 		def bind_act(act)
-			@target_mother = act.target_mother
 			@act_scheduler = act.act_scheduler
 			@node          = act.node
 		end

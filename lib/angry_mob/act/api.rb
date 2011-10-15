@@ -2,6 +2,13 @@ class AngryMob
   class Act
     module Api
 
+			def self.included(base)
+				base.class_eval do
+					attr_reader :node, :act_scheduler
+				end
+			end
+				
+
       def self.running(flag=true)
         original_running,@running = @running,flag
         yield
@@ -35,12 +42,24 @@ class AngryMob
       # The wrapped `Target` is returned.
       def __run_target(nickname, *args, &blk)
         AngryMob::Act::Api.running(false) do
-          target_mother.target(self, nickname, *args, &blk).tap do |target|
+          target(self, nickname, *args, &blk).tap do |target|
             target.merge_defaults( defaults.defaults_for(nickname) )
             target.call
           end
         end
       end
+
+
+			# Map nickname -> class, instantiate
+      def target(act, nickname, *args, &blk)
+				target_classes = Target::Tracking.subclasses
+        target_class = target_classes[nickname.to_s]
+
+        raise(MobError, "no target nicknamed '#{nickname}'\navailable targets:\n#{target_classes.keys.inspect}") unless target_class
+
+        target_class.new( act, args, &blk )
+      end
+
 
 
       ########################
