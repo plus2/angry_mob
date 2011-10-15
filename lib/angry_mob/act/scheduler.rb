@@ -119,7 +119,7 @@ class AngryMob
 
         elsif act_or_name.is_a?(Module) && act_or_name < AngryMob::Actor
           # XXX might want to bind the act?
-          act      = act_or_name.build_instance( options, *arguments )
+          act      = act_or_name.build_instance( @node, options, *arguments )
           act_name = act.name
 
         else

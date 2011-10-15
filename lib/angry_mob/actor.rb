@@ -5,16 +5,36 @@ class AngryMob
       base.extend ClassMethods
       base.__send__ :include, AngryMob::Act::Api
 
-      base.class_eval do
-      end
+      path, = caller[0].partition(":")     
+      base.definition_file = path
+
     end
 
 
     module ClassMethods
+      def inherited(klass)
+        super
+        path, = caller[0].partition(":")
+        klass.definition_file = path
+      end
+
+
+      def definition_file=(definition_file)
+        @definition_file = definition_file
+      end
+
+
+      def definition_file; @definition_file end
+
+
+      def abstract_actor
+      end
+
+
       # XXX pass in anything?
-      def build_instance( options, *arguments )
+      def build_instance( node, options, *arguments )
         if klass = ( @build_block && @build_block[ *arguments ] ) || self
-          klass.new
+          klass.new(node)
         end
 
         # XXX use an abstract keyword, to stop instantiating the base class
@@ -28,24 +48,30 @@ class AngryMob
     end
 
 
-    def initialize
+    # XXX global :(
+    def ui; Rioter.ui end
+
+
+    def initialize(node)
+      @node = node
     end
 
 
-    MMSentinel = %r{angry_mob/act/api.rb:\d+:in `method_missing'}
+    #MMSentinel = %r{angry_mob/act/api.rb:\d+:in `method_missing'}
 
-    # XXX handle ancestor chain, for resource locator search path
-    def definition_file
-      stacktrace = caller(0)
+    ## XXX handle ancestor chain, for resource locator search path
+    #def definition_file
+      #stacktrace = caller(0).tapp
 
-      if index = stacktrace.index {|line| line[MMSentinel]}
-        stacktrace[index+1].split(':').first
-      else
-        "<unknown>"
-      end
+      #if index = stacktrace.index {|line| line[MMSentinel]}
+        #stacktrace[index+1].split(':').first
+      #else
+        #"<unknown>"
+      #end
 
-    end
+    #end
 
+    def definition_file; self.class.definition_file end
 
 
     # Actors quack like multi-acts, by definition
