@@ -6,7 +6,7 @@ require 'exemplor'
 require 'pathname'
 require 'pp'
 
-root = Pathname('../..').expand_path(__FILE__)
-$LOAD_PATH << root+'lib'
+Root = Pathname('../..').expand_path(__FILE__)
+$LOAD_PATH << Root+'lib'
 
 require 'angry_mob/vendored'
