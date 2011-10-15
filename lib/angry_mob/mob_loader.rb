@@ -6,7 +6,7 @@ class AngryMob
   ::Target = AngryMob::Target
 
   class MobLoader
-    attr_reader :builder, :mobs, :loaded_mobs
+    attr_reader :mobs, :loaded_mobs, :attributes
 
     def ui
       Rioter.ui
@@ -14,41 +14,73 @@ class AngryMob
 
 
     def initialize(attributes)
-      @builder = Builder.new(attributes)
-      @mobs    = Dictionary.new
-      @loaded_mobs = {}
+      @attributes   = attributes
+      @mobs         = {}
+      @mob_order    = []
+      @loaded_mobs  = {}
     end
 
     
-    def add_mob(path,name=nil)
-      Mob.new(path,name).tap {|mob|
-        mobs[mob.name] = mob
-      }
+    def add_mob(path)
+      mob = Mob.new(path)
+      mob.load!
+
+      mob_name = mob.name.to_s
+
+      if mobs[ mob_name ]
+        raise MobLoadingError, "Already loaded my called '#{ mob_name }'"
+      end
+      
+
+      mobs[ mob_name ] = mob
+      @mob_order << mob
     end
 
 
-    def load_mobs
-      mobs.each_key do |name|
-        load_mob_named(name)
+    def build_mobs
+      @mob_order.map {|mob| build_mob mob}
+    end
+
+
+    def build_mob(mob)
+      ui.push "setting up mob '#{ mob.name }'" do
+
+        if mob.dependencies.present?
+          ui.info "loading dependencies"
+          mob.dependencies.each do |name, options|
+            build_mob_named name, options
+          end
+        end
+
+        ui.info "setting up"
+        mob.build!(attributes)
       end
     end
 
 
-    def load_mob_named(name)
+
+    def build_mob_named(name, options)
       name = name.to_s
       mob  = mobs[name]
 
-      raise "unable to load unknown mob '#{name}'" unless mob
+      raise "unable to build unknown mob '#{name}'" unless mob
 
-      return if mob.loaded?
+      return if mob.built?
 
-      mob.load!(self)
+      build_mob( mob )
     end
 
 
     def to_rioter
-      load_mobs
-      builder.to_rioter
+      build_mobs
+
+      rioter = Rioter.new
+
+      @mob_order.each do |mob|
+        mob.builder.add_to_rioter(rioter)
+      end
+
+      rioter
     end
   end
 end
