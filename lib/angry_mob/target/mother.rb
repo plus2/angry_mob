@@ -31,8 +31,8 @@ class AngryMob
       end
 
 
-      def target(rioter, definition_file, nickname, *args, &blk)
-        target_class( nickname ).new( rioter, definition_file, *args, &blk )
+      def target(act, nickname, *args, &blk)
+        target_class( nickname ).new( act, *args, &blk )
       end
 
 

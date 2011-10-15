@@ -5,7 +5,7 @@ class AngryMob
 
     def initialize
       @target_mother = Target::Mother.new
-      @act_scheduler = Act::Scheduler.new(self)
+      @act_scheduler = Act::Scheduler.new
     end
 
 

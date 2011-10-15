@@ -8,32 +8,45 @@ class AngryMob
 
     include Api
 
-    attr_reader :mob, :rioter, :name, :definition_file, :options, :predicate
+    attr_reader :mob, :name, :definition_file, :options, :predicate
 
     NullMobInstance = NullMob.new
     BlankAct = lambda {|*|}
 
 
-    def initialize(mob, *args, &blk)
-      @mob     = mob
-      @options = args.extract_options!
-      @name    = args.shift || generate_random_name
+    def initialize(mob, definition_file, *args, &blk)
+      @mob             = mob
+      @definition_file = definition_file
 
-      @multi   = !! options.delete(:multi)
-      @blk     = block_given? ? blk : BlankAct
+      @options         = args.extract_options!
+      @name            = args.shift || generate_random_name
+
+      @multi           = !! options.delete(:multi)
+      @blk             = block_given? ? blk : BlankAct
 
       parse_predicate!
     end
 
 
-    def parse_predicate!
-      begin
-        @predicate = Predicate.build( options.slice(:on,:on_all,:on_any) )
-      rescue Citrus::ParseError
-        puts "error creating predicate on act #{name} #{options[:definition_file]}"
-        raise $!
-      end
+		attr_reader :target_mother, :act_scheduler, :node
+
+
+    # Binds the act to the rioter.
+    def bind_rioter(rioter)
+			puts "binding rioter"
+			@target_mother = rioter.target_mother
+			@act_scheduler = rioter.act_scheduler
+
+      rioter.act_scheduler.add_act @name, self
     end
+
+
+		def bind_act(act)
+			@target_mother = act.target_mother
+			@act_scheduler = act.act_scheduler
+			@node          = act.node
+		end
+
 
 
     def ui; mob.ui end
@@ -43,22 +56,10 @@ class AngryMob
     def multi?; !!@multi end
 
 
-    def match?(event)
-      @predicate.match?(event)
-    end
-
-
-    # Binds the act to the rioter and the file from which it came.
-    def bind(rioter, file)
-      @rioter          = rioter
-      @definition_file = file
-
-      rioter.act_scheduler.add_act @name, self
-    end
-
-
     # Executes the block via `instance_exec`
-    def run!(*arguments)
+    def run!(node, *arguments)
+			@node = node
+
       ui.push("act '#{name}'", :bubble => true) do
         @running = true
 
@@ -73,11 +74,33 @@ class AngryMob
     end
 
 
+		# XXX this is a poor api, revise
     def in_sub_act(*args, &blk)
-      sub_act = self.class.new(NullMobInstance, "#{name}-sub-#{generate_random_name}", {:multi => true}, &blk)
-      sub_act.bind(rioter, @definition_file)
+      sub_act = self.class.new(NullMobInstance, definition_file, "#{name}-sub-#{generate_random_name}", {:multi => true}, &blk)
+      sub_act.bind_act(self)
       sub_act.run!(*args)
     end
+
+
+
+		###############
+		#  predicate  #
+		###############
+
+    def parse_predicate!
+      begin
+        @predicate = Predicate.build( options.slice(:on,:on_all,:on_any) )
+      rescue Citrus::ParseError
+        puts "error creating predicate on act #{name} #{definition_file}"
+        raise $!
+      end
+    end
+
+
+    def match?(event)
+      @predicate.match?(event)
+    end
+		
 
 
     ##################################

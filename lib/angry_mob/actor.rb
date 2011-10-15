@@ -6,15 +6,15 @@ class AngryMob
       base.__send__ :include, AngryMob::Act::Api
 
       base.class_eval do
-        attr_reader :rioter
       end
     end
 
 
     module ClassMethods
-      def build_instance( rioter, options, *arguments )
+      # XXX pass in anything?
+      def build_instance( options, *arguments )
         if klass = ( @build_block && @build_block[ *arguments ] ) || self
-          klass.new(rioter)
+          klass.new
         end
 
         # XXX use an abstract keyword, to stop instantiating the base class
@@ -28,13 +28,13 @@ class AngryMob
     end
 
 
-    def initialize(rioter)
-      @rioter = rioter
+    def initialize
     end
 
 
     MMSentinel = %r{angry_mob/act/api.rb:\d+:in `method_missing'}
 
+    # XXX handle ancestor chain, for resource locator search path
     def definition_file
       stacktrace = caller(0)
 
@@ -47,6 +47,7 @@ class AngryMob
     end
 
 
+
     # Actors quack like multi-acts, by definition
     def multi?; true end 
 
@@ -56,7 +57,7 @@ class AngryMob
     end
 
 
-    def run!(*args)
+    def run!(node, *args)
     end
   end
 end

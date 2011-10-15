@@ -31,7 +31,10 @@ class AngryMob
 
 			# read and evaluate a file in builder context
 			def from_file(path)
+				old_eval_path,@current_eval_path = @current_eval_path,path
 				instance_eval path.read, path.to_s
+			ensure
+				@current_eval_path = old_eval_path
 			end
 
 
@@ -70,9 +73,9 @@ class AngryMob
 				rioter.consolidate_node = @node_consolidation_block
 
 				# create and bind acts
-				acts.each do |(act,definition_file)|
+				acts.each do |act|
 					act.extend helper_mod 
-					act.bind(rioter,definition_file)
+					act.bind_rioter(rioter)
 				end
 
 				# bind event processors
@@ -158,16 +161,7 @@ class AngryMob
 
 			# Defines an `act` block
 			def act(*args, &blk)
-				act = Act.new(mob, *args, &blk)
-				acts << [act,file.dup]
-			end
-
-
-			def multi_act(name, options={}, &blk)
-				options[:multi] = true
-				act = Act.new(mob, name, options, &blk)
-
-				acts << [act,file.dup]
+				acts << Act.new(mob, @current_eval_path, *args, &blk)
 			end
 
 

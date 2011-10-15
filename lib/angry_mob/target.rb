@@ -25,23 +25,21 @@ class AngryMob
     end
 
 
-    attr_reader :rioter, :definition_file, :args, :current_action
+    attr_reader :ui, :node, :definition_file, :args, :current_action
 
 
-    # convenience accessors
-    attr_accessor :act
-
-
-    def ui    ; rioter.ui   end
-    def node  ; rioter.node end
-
-
-    def initialize(rioter, definition_file, args, &blk)
-      @rioter = rioter
-      @definition_file = definition_file.tapp(:def_file)
-
+    def initialize(act, args, &blk)
+      bind_act(act)
       @args = Arguments.parse(args, &blk)
       validate_actions!
+    end
+
+
+    def bind_act(act)
+      @definition_file = act.definition_file
+      @ui              = act.ui
+      @node            = act.node
+      @act_scheduler   = act.act_scheduler
     end
 
 
@@ -117,7 +115,7 @@ class AngryMob
     # Called when the state has changed.
     # Very simply delegates event to the act scheduler
     def fire!
-      rioter.act_scheduler.fire(args.fire) if args.fire.present?
+      act_scheduler.fire(args.fire) if args.fire.present?
     end
     
 

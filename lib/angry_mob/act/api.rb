@@ -35,7 +35,7 @@ class AngryMob
       # The wrapped `Target` is returned.
       def __run_target(nickname, *args, &blk)
         AngryMob::Act::Api.running(false) do
-          rioter.target_mother.target(rioter, definition_file, nickname, *args, &blk).tap do |target|
+          target_mother.target(self, nickname, *args, &blk).tap do |target|
             target.merge_defaults( defaults.defaults_for(nickname) )
             target.call
           end
@@ -52,23 +52,18 @@ class AngryMob
       end
 
 
-      def node
-        rioter.node
-      end
-
-
       def act_now act_name, *args
-        rioter.act_scheduler.act_now act_name, {}, *args
+        act_scheduler.act_now act_name, {}, *args
       end
 
 
       def try_to_act_now act_name, *args
-        rioter.act_scheduler.act_now act_name, {:try => true}, *args
+        act_scheduler.act_now act_name, {:try => true}, *args
       end
 
 
       def fire event_name
-        rioter.act_scheduler.fire event_name
+        act_scheduler.fire event_name
       end
     end
   end
