@@ -14,8 +14,6 @@ class AngryMob
   autoload :Node           , 'angry_mob/node'
 
   autoload :Target         , 'angry_mob/target'
-  autoload :SingletonTarget, 'angry_mob/singleton_target'
-  autoload :Action         , 'angry_mob/action'
 
   autoload :Act            , 'angry_mob/act'
   autoload :Actor          , 'angry_mob/actor'

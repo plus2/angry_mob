@@ -1,11 +1,10 @@
 class AngryMob
   class MobError < StandardError; end
   class Rioter
-    attr_reader :node, :act_scheduler, :target_mother
+    attr_reader :node, :act_scheduler
 
     def initialize
-      @target_mother = Target::Mother.new
-      @act_scheduler = Act::Scheduler.new(self)
+      @act_scheduler = Act::Scheduler.new
     end
 
 

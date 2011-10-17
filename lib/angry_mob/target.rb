@@ -13,6 +13,7 @@ class AngryMob
     require "angry_mob/target/internal_api"
     require "angry_mob/target/calling"
 
+
     include Tracking
     include ClassApi
     include InternalApi
@@ -24,25 +25,21 @@ class AngryMob
     end
 
 
-    attr_reader :args, :current_action
+    attr_reader :ui, :node, :definition_file, :args, :current_action
 
 
-    # convenience accessors
-    attr_accessor :act
-
-
-    def mob   ; act.mob     end
-    def rioter; act.rioter  end
-    def ui    ; mob.ui      end
-    def node  ; rioter.node end
-
-
-    def log(message); mob.ui.log message end
-
-
-    def initialize(args, &blk)
+    def initialize(act, args, &blk)
+      bind_act(act)
       @args = Arguments.parse(args, &blk)
       validate_actions!
+    end
+
+
+    def bind_act(act)
+      @definition_file = act.definition_file
+      @ui              = act.ui
+      @node            = act.node
+      @act_scheduler   = act.act_scheduler
     end
 
 
@@ -118,7 +115,7 @@ class AngryMob
     # Called when the state has changed.
     # Very simply delegates event to the act scheduler
     def fire!
-      rioter.act_scheduler.fire(args.fire) if args.fire.present?
+      act_scheduler.fire(args.fire) if args.fire.present?
     end
     
 

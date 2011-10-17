@@ -4,33 +4,44 @@ class AngryMob
     autoload :Scheduler     , "angry_mob/act/scheduler"
     autoload :Predicate     , "angry_mob/act/predicate"
     autoload :EventProcessor, "angry_mob/act/event_processor"
+    autoload :Api           , "angry_mob/act/api"
 
-    attr_reader :mob, :rioter, :name, :definition_file, :options, :predicate
+    include Api
+
+    attr_reader :mob, :name, :definition_file, :options, :predicate
 
     NullMobInstance = NullMob.new
     BlankAct = lambda {|*|}
 
 
-    def initialize(mob, *args, &blk)
-      @mob     = mob
-      @options = args.extract_options!
-      @name    = args.shift || generate_random_name
+    def initialize(mob, definition_file, *args, &blk)
+      @mob             = mob
+      @definition_file = definition_file
 
-      @multi   = !! options.delete(:multi)
-      @blk     = block_given? ? blk : BlankAct
+      @options         = args.extract_options!
+      @name            = args.shift || generate_random_name
+
+      @multi           = !! options.delete(:multi)
+      @blk             = block_given? ? blk : BlankAct
 
       parse_predicate!
     end
 
 
-    def parse_predicate!
-      begin
-        @predicate = Predicate.build( options.slice(:on,:on_all,:on_any) )
-      rescue Citrus::ParseError
-        puts "error creating predicate on act #{name} #{options[:definition_file]}"
-        raise $!
-      end
+    # Binds the act to the rioter.
+    def bind_rioter(rioter)
+			puts "binding rioter"
+			@act_scheduler = rioter.act_scheduler
+
+      @act_scheduler.add_act @name, self
     end
+
+
+		def bind_act(act)
+			@act_scheduler = act.act_scheduler
+			@node          = act.node
+		end
+
 
 
     def ui; mob.ui end
@@ -40,22 +51,10 @@ class AngryMob
     def multi?; !!@multi end
 
 
-    def match?(event)
-      @predicate.match?(event)
-    end
-
-
-    # Binds the act to the rioter and the file from which it came.
-    def bind(rioter, file)
-      @rioter          = rioter
-      @definition_file = file
-
-      rioter.act_scheduler.add_act @name, self
-    end
-
-
     # Executes the block via `instance_exec`
-    def run!(*arguments)
+    def run!(node, *arguments)
+			@node = node
+
       ui.push("act '#{name}'", :bubble => true) do
         @running = true
 
@@ -70,39 +69,33 @@ class AngryMob
     end
 
 
-
-    ##############
-    #  Dispatch  #
-    ##############
-
-    # TODO - de-mm
-    def method_missing(nickname, *args, &blk)
-      return super unless @running
-      __run_target(nickname,*args,&blk)
+		# XXX this is a poor api, revise
+    def in_sub_act(*args, &blk)
+      sub_act = self.class.new(NullMobInstance, definition_file, "#{name}-sub-#{generate_random_name}", {:multi => true}, &blk)
+      sub_act.bind_act(self)
+      sub_act.run!(*args)
     end
 
 
-    # bundler + rubygems clusterfuck
-    def gem(*args,&blk)
-      __run_target(:gem, *args, &blk)
-    end
 
+		###############
+		#  predicate  #
+		###############
 
-    # Locates and calls a `Target::Call` (which wraps a `Target`).
-    # The wrapped `Target` is returned.
-    def __run_target(nickname, *args, &blk)
-      rioter.target_mother.target(nickname, *args, &blk).tap do |target|
-        target.merge_defaults( defaults.defaults_for(nickname) )
-        target.call_with_act(self)
+    def parse_predicate!
+      begin
+        @predicate = Predicate.build( options.slice(:on,:on_all,:on_any) )
+      rescue Citrus::ParseError
+        puts "error creating predicate on act #{name} #{definition_file}"
+        raise $!
       end
     end
 
 
-    def in_sub_act(*args, &blk)
-      sub_act = self.class.new(NullMobInstance, "#{name}-sub-#{generate_random_name}", {:multi => true}, &blk)
-      sub_act.bind(rioter, @definition_file)
-      sub_act.run!(*args)
+    def match?(event)
+      @predicate.match?(event)
     end
+		
 
 
     ##################################
@@ -164,38 +157,6 @@ class AngryMob
 
 
 
-    ########################
-    #  Definition helpers  #
-    ########################
-
-    def defaults
-      @defaults ||= Target::Defaults.new
-    end
-
-
-    def node
-      rioter.node
-    end
-
-
-    def act_now act_name, *args
-      rioter.act_scheduler.act_now act_name, {}, *args
-    end
-
-
-    def try_to_act_now act_name, *args
-      rioter.act_scheduler.act_now act_name, {:try => true}, *args
-    end
-
-
-    def fire event_name
-      rioter.act_scheduler.fire event_name
-    end
-
-
-    def schedule_act act_name
-      raise "to remove"
-    end
 
 
     protected

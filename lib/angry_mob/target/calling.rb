@@ -9,8 +9,7 @@ class AngryMob
 
 
       # Actually call the target
-      def call_with_act(act, hints={})
-        self.act = act
+      def call
         noticing_changes do
           args.actions.each {|action| __send__(action)}
         end

@@ -8,11 +8,11 @@ class AngryMob
     # - direct execution of acts using `act_now`
     class Scheduler
       attr_writer :node
-      attr_reader :acted, :rioter, :event_processors
+      attr_reader :acted, :event_processors, :ui
 
 
-      def initialize(rioter)
-        @rioter = rioter
+      def initialize
+        @ui = Rioter.ui # XXX global :P
         @event_queue = []
         @event_processors = []
         reset!
@@ -20,17 +20,19 @@ class AngryMob
 
 
       def run!
-        # fire initial events
-        seed_events.each do |event|
-          fire event
+        AngryMob::Act::Api.running do
+          # fire initial events
+          seed_events.tapp(:seed).each do |event|
+            fire event
+          end
+
+          # schedule events until the event queue is empty
+          exhaust_queue
+
+          # finalisation phase: fire the finalise event and exhaust the queue again
+          fire 'finalise'
+          exhaust_queue
         end
-
-        # schedule events until the event queue is empty
-        exhaust_queue
-
-        # finalisation phase: fire the finalise event and exhaust the queue again
-        fire 'finalise'
-        exhaust_queue
 
         ui.good "finished running acts"
       end
@@ -56,7 +58,8 @@ class AngryMob
         acted!(act_name)
 
 
-        act.run!(*arguments)
+        act.run!(@node, *arguments)
+
         fire( "finished/#{act.name}" )
       end
 
@@ -83,7 +86,7 @@ class AngryMob
             next if acted?(act)
             acted!(act)
 
-            act.run!
+            act.run!(@node)
           end
         end
 
@@ -115,7 +118,8 @@ class AngryMob
           act_name = act.name
 
         elsif act_or_name.is_a?(Module) && act_or_name < AngryMob::Actor
-          act      = act_or_name.build_instance( options, *arguments )
+          # XXX might want to bind the act?
+          act      = act_or_name.build_instance( @node, options, *arguments )
           act_name = act.name
 
         else
@@ -133,11 +137,13 @@ class AngryMob
       end
 
 
-      def ui; @rioter.ui end
-
-
       def reset!
-        %w{ seed_events available_acts acted_acts }.each {|ivar| instance_variable_set("@#{ivar}", nil)}
+        %w{ 
+          seed_events
+          available_acts
+          acted_acts
+        }.each {|ivar| instance_variable_set("@#{ivar}", nil)}
+
         @acted = []
       end
 
@@ -163,7 +169,7 @@ class AngryMob
 
 
       def raise_on_missing_act?
-        !( FalseClass === rioter.node.raise_on_missing_act )
+        !( FalseClass === @node.raise_on_missing_act )
       end
 
 
